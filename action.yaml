@@ -211,9 +211,9 @@ runs:
       cat("::endgroup::\n")
     shell: Rscript {0}
 
-  - name: Prepare DESCRIPTION file (develpment)
+  - name: Prepare DESCRIPTION file (development)
     if: ${{ !inputs.skip-desc-dev }}
-    id: desc-branch
+    id: desc-dev
     run: |
       cat("::group::Define utils\n")
       desc_field_create <- function(d, key) {
