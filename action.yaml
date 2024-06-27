@@ -9,7 +9,7 @@ inputs:
     required: false
     default: ""
   repository-path:
-    description: Directory where the R package is located.
+    description: Directory where the R package is located relative to the calling GitHub workflow workspace.
     required: false
     default: "."
   lookup-refs:
@@ -59,10 +59,6 @@ branding:
 runs:
   using: composite
   steps:
-
-  - name: Set git safe directory
-    run: git config --global --add safe.directory $(pwd)
-    shell: bash
 
   - name: Get branch names
     id: branch-names
@@ -122,9 +118,6 @@ runs:
         }
         return(res)
       }
-      get_current_branch <- function() {
-        system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
-      }
       remote_ref_add_branch <- function(remote_ref, branch_name) {
         pkgdepends::parse_pkg_ref(
           sprintf(
@@ -175,12 +168,11 @@ runs:
         cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
         return()
       }
+      current_branch <- "${{ steps.branch-names.outputs.current_branch }}"
+      cli::cli_alert_info("Current branch: {.field {current_branch}}.")
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
-      current_branch <- get_current_branch()
-      cli::cli_alert_info("Current branch: {.field {current_branch}}.")
-
       d <- desc::desc(path)
       desc_field_create(d, "Config/Needs/DepsBranch")
 
