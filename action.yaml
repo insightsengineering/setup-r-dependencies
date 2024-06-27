@@ -70,7 +70,7 @@ runs:
         desc
 
   - name: Prepare DESCRIPTION file (feature branch)
-    if: ${{ !inputs.skip-desc-branch }}
+    if: ${{ inputs.skip-desc-branch == 'false' }}
     id: desc-branch
     run: |
       cat("::group::Define utils\n")
@@ -212,7 +212,7 @@ runs:
     shell: Rscript {0}
 
   - name: Prepare DESCRIPTION file (development)
-    if: ${{ !inputs.skip-desc-dev }}
+    if: ${{ inputs.skip-desc-dev == 'false' }}
     id: desc-dev
     run: |
       cat("::group::Define utils\n")
@@ -318,7 +318,7 @@ runs:
     shell: Rscript {0}
 
   - uses: r-lib/actions/setup-r-dependencies@v2
-    if: ${{ !inputs.skip-install }}
+    if: ${{ inputs.skip-install == 'false' }}
     with:
       working-directory: ${{ inputs.repository-path }}
       extra-packages: ${{ inputs.extra-packages }}
