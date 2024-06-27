@@ -1,0 +1,29 @@
+---
+name: Setup R dependencies
+author: Insights Engineering
+description: GitHub Action to install R package dependencies
+
+inputs:
+  github-token:
+    description: GitHub token.
+    required: false
+    default: ""
+  repository-path:
+    description: Directory where the R package is located.
+    required: false
+    default: "."
+
+branding:
+  icon: 'download'
+  color: 'orange'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup R dependencies
+      run: |
+        cat("test")
+      shell: Rscript {0}
+      env:
+        GITHUB_PAT: "${{ inputs.github-token }}"
+      working-directory: ${{ inputs.repository-path }}
