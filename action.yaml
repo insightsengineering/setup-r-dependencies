@@ -77,6 +77,7 @@ runs:
   - name: Prepare DESCRIPTION file (feature branch)
     if: ${{ inputs.skip-desc-branch == 'false' }}
     id: desc-branch
+    shell: Rscript {0}
     run: |
       cat("::group::Define utils\n")
       base_packages <- c("R", "base", "utils", "stats", "graphics", "grDevices", "datasets", "methods", "tools", "parallel", "compiler")
@@ -214,11 +215,12 @@ runs:
       cat("::group::Print DESCRIPTION file\n")
       d
       cat("::endgroup::\n")
-    shell: Rscript {0}
+
 
   - name: Prepare DESCRIPTION file (development)
     if: ${{ inputs.skip-desc-dev == 'false' }}
     id: desc-dev
+    shell: Rscript {0}
     run: |
       cat("::group::Define utils\n")
       desc_field_create <- function(d, key) {
@@ -320,7 +322,6 @@ runs:
       cat("::group::Print DESCRIPTION file\n")
       d
       cat("::endgroup::\n")
-    shell: Rscript {0}
 
   - uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
