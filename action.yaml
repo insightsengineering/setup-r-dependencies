@@ -149,11 +149,11 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Parse inputs\n")
-      lookup_refs <- parse_input({{ inputs.lookup-refs }})
+      lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
-      extra_deps <- parse_input({{ inputs.extra-deps }})
+      extra_deps <- parse_input("${{ inputs.extra-deps }}")
       cli::cli_alert_info("Extra dependencies: {.val {extra_deps}}.")
-      path <- "{{ inputs.repository-path }}"
+      path <- "${{ inputs.repository-path }}"
       cli::cli_alert_info("Repository path: {.val {path}}.")
       cat("::endgroup::\n")
 
