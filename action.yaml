@@ -84,6 +84,7 @@ runs:
       inputs.skip-desc-branch == 'false' ||
       steps.branch-names.outputs.is_default == 'true'
     id: desc-branch
+    working-directory: ${{ inputs.repository-path }}
     shell: Rscript {0}
     run: |
       cat("::group::Define utils\n")
