@@ -162,7 +162,7 @@ runs:
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
         return()
       }
-      if (length(lookup_refs) == 0 || lookup_refs == "") {
+      if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
         cli::cli_alert_danger("No lookup refs provided. Skipping.")
         return()
       }
@@ -295,7 +295,7 @@ runs:
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
         return()
       }
-      if (length(lookup_refs) == 0 || lookup_refs == "") {
+      if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
         cli::cli_alert_danger("No lookup refs provided. Skipping.")
         return()
       }
