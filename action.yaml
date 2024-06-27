@@ -12,6 +12,38 @@ inputs:
     description: Directory where the R package is located.
     required: false
     default: "."
+  lookup-refs:
+    description: List of package references to be used for the feature branch. Multiple references in new lines or separated by commas.
+    required: false
+    default: ""
+  extra-deps:
+    description: List of extra dependencies to check against feature branch existence. Multiple references in new lines or separated by commas. It allows to control indirect dependencies. This requires an entry in the `lookup-refs` input.
+    required: false
+    default: ""
+  dependencies:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: false
+    default: '"all"'
+  extra-packages:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: false
+    default: ""
+  needs:
+    description: Passed to `r-lib/actions/setup-r-dependencies`. The value will be amended by `DepsBranch` and `DepsDev` values.
+    required: false
+    default: ""
+  skip-desc-branch:
+    description: Skip the DESCRIPTION file modification for the feature branch.
+    required: false
+    default: false
+  skip-desc-dev:
+    description: Skip the DESCRIPTION file modification for the development branch.
+    required: false
+    default: false
+  skip-install:
+    description: Skip the installation of R package dependencies.
+    required: false
+    default: false
 
 branding:
   icon: 'download'
@@ -20,11 +52,271 @@ branding:
 runs:
   using: composite
   steps:
-    - name: Setup R dependencies
-      run: |
-        install.packages(c("cli", "desc", "pkgdepends"))
-        cat("test")
-      shell: Rscript {0}
-      env:
-        GITHUB_PAT: "${{ inputs.github-token }}"
+  - name: Install required packages
+    uses: r-lib/actions/setup-r-dependencies@v2
+    with:
+      packages: |
+        any::sessioninfo
+      extra-packages: |
+        pkgdepends
+        cli
+        desc
+
+  - name: Prepare DESCRIPTION file (feature branch)
+    if: ${{ !inputs.skip-desc-branch }}
+    id: desc-branch
+    run: |
+      cat("::group::Define utils\n")
+      base_packages <- c("R", "base", "utils", "stats", "graphics", "grDevices", "datasets", "methods", "tools", "parallel", "compiler")
+      desc_field_create <- function(d, key) {
+        d$set_list(key, character(0))
+      }
+      desc_field_append <- function(d, key, value) {
+        old_values <- d$get_field(key)
+        new_values <- paste0(old_values, value, collapse = ", ")
+        d$set_list(key, new_values)
+      }
+      desc_field_clear_if_empty <- function(d, key) {
+        if (d$get_field(key) == "") {
+          d$del(key)
+        }
+      }
+      find_ref <- function(package, refs) {
+        res <- pkgdepends::parse_pkg_refs(refs) |>
+          Filter(
+            x = _,
+            f = function(ref) {
+              ref$package == package
+            }
+          )
+        if (length(res) == 0) {
+          return(NULL)
+        }
+        if (length(res) > 1) {
+          warning(sprintf("Multiple refs found for package %s. Only the first one will be used.", package))
+        }
+        res <- res[[1]]
+        if (isFALSE(is(res, "remote_ref_github"))) {
+          warning(sprintf("Ref for package %s is not a GitHub type of ref.", package))
+          return(NULL)
+        }
+        return(res)
+      }
+      get_current_branch <- function() {
+        system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
+      }
+      get_default_branch <- function() {
+        system("git remote show origin | grep \"HEAD branch\" | sed 's/.*: //'", intern = TRUE)
+      }
+      remote_ref_add_branch <- function(remote_ref, branch_name) {
+        pkgdepends::parse_pkg_ref(
+          sprintf(
+            "%s@%s",
+            gsub(
+              "//@.*",
+              "",
+              remote_ref$ref
+            ),
+            branch_name
+          )
+        )
+      }
+      remote_ref_ping <- function(remote_ref) {
+        x <- pkgdepends::new_pkg_deps(remote_ref$ref, config = list(dependencies = FALSE))
+        x$solve()
+        x$get_solution()$status == "OK"
+      }
+      parse_input <- function(input) {
+        gsub("\n", ",", input) |>
+          strsplit(x = _, split = ",") |>
+          _[[1]] |>
+          trimws()
+      }
+      cat("::endgroup::\n")
+
+      cat("::parse inputs::\n")
+      lookup_refs <- parse_input({{ inputs.lookup-refs }})
+      cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
+      extra_deps <- parse_input({{ inputs.extra-deps }})
+      cli::cli_alert_info("Extra dependencies: {.val {extra_deps}}.")
+      path <- "{{ inputs.repository-path }}"
+      cli::cli_alert_info("Repository path: {.val {path}}.")
+      cat("::endgroup::\n")
+
+      cat("::group::Modify DESCRIPTION file\n")
+      current_branch <- get_current_branch()
+      cli::cli_alert_info("Current branch: {.field {current_branch}}.")
+      default_branch <- get_default_branch()
+      cli::cli_alert_info("Default branch: {.field {default_branch}}.")
+
+      if (identical(current_branch, default_branch)) {
+        cli::cli_alert_info("Current branch {.field {current_branch}} is the default branch. Skipping.")
+        return()
+      }
+
+      d <- desc::desc(path)
+      desc_field_create(d, "Config/Needs/DepsBranch")
+
+      deps <- d$get_deps()
+      if (length(extra_deps) > 0 && !identical(extra_deps, "")) {
+        cli::cli_alert_info("Adding extra dependencies: {.val {paste(extra_deps, collapse = \", \")}}.")
+        deps <- rbind(deps, data.frame(type = "Extra", package = extra_deps, version = "*"))
+      }
+
+      for (i in seq_len(nrow(deps))) {
+        x_type <- deps[i, "type"]
+        x_package <- deps[i, "package"]
+        x_version_str <- deps[i, "version"]
+        cli::cli_alert_info("Processing package {.pkg {x_package}}.")
+
+        if (x_package %in% base_packages) {
+          cli::cli_alert_info("Package {.pkg {x_package}} is a base package. Skipping.")
+          next
+        }
+
+        x_remote_ref <- find_ref(x_package, lookup_refs)
+        if (length(x_remote_ref) == 0) {
+          cli::cli_alert_info("Package {.pkg {x_package}} not found in the {.code lookup_refs} list. Skipping.")
+          next
+        }
+
+        x_remote_ref_branch <- remote_ref_add_branch(x_remote_ref, current_branch)
+        if (isFALSE(remote_ref_ping(x_remote_ref_branch))) {
+          cli::cli_alert_info("Feature branch {.field {current_branch}} does not exist for package {.pkg {x_package}}. Skipping.")
+          next
+        }
+
+        desc_field_append("Config/Needs/DepsBranch", x_remote_ref_branch$ref)
+        cli::cli_alert_success("Package {.pkg {x_package}} added to the {.code Config/Needs/DepsBranch} field.")
+      }
+
+      desc_field_clear_if_empty(d, "Config/Needs/DepsBranch")
+      d$write(path)
+      cat("::endgroup::\n")
+
+      cat("::group::Print added field\n")
+      cat(d$get("Config/Needs/DepsBranch"))
+      cat("\n")
+      cat("::endgroup::\n")
+
+      cat("::group::Print DESCRIPTION file\n")
+      d
+      cat("::endgroup::\n")
+    shell: Rscript {0}
+
+  - name: Prepare DESCRIPTION file (develpment)
+    if: ${{ !inputs.skip-desc-dev }}
+    id: desc-branch
+    run: |
+      cat("::group::Define utils\n")
+      desc_field_create <- function(d, key) {
+        d$set_list(key, character(0))
+      }
+      desc_field_append <- function(d, key, value) {
+        old_values <- d$get_field(key)
+        new_values <- paste0(old_values, value, collapse = ", ")
+        d$set_list(key, new_values)
+      }
+      desc_field_clear_if_empty <- function(d, key) {
+        if (d$get_field(key) == "") {
+          d$del(key)
+        }
+      }
+      find_ref <- function(package, refs) {
+        res <- pkgdepends::parse_pkg_refs(refs) |>
+          Filter(
+            x = _,
+            f = function(ref) {
+              ref$package == package
+            }
+          )
+        if (length(res) == 0) {
+          return(NULL)
+        }
+        if (length(res) > 1) {
+          warning(sprintf("Multiple refs found for package %s. Only the first one will be used.", package))
+        }
+        res <- res[[1]]
+        if (isFALSE(is(res, "remote_ref_github"))) {
+          warning(sprintf("Ref for package %s is not a GitHub type of ref.", package))
+          return(NULL)
+        }
+        return(res)
+      }
+      parse_input <- function(input) {
+        gsub("\n", ",", input) |>
+          strsplit(x = _, split = ",") |>
+          _[[1]] |>
+          trimws()
+      }
+      cat("::endgroup::\n")
+
+      cat("::parse inputs::\n")
+      lookup_refs <- parse_input({{ inputs.lookup-refs }})
+      cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
+      path <- "{{ inputs.repository-path }}"
+      cli::cli_alert_info("Repository path: {.val {path}}.")
+      cat("::endgroup::\n")
+
+      cat("::group::Modify DESCRIPTION file\n")
+      d <- desc::desc(path)
+      desc_field_create(d, "Config/Needs/DepsDev")
+
+      dependency_types <- c(
+        pkgdepends::as_pkg_dependencies(TRUE)$direct,
+        "Config/Needs/DepsBranch",
+        "Config/Needs/DepsDev"
+      )
+
+      x <- pkgdepends::new_pkg_deps(path, config = list(dependencies = dependency_types))
+
+      while (TRUE) {
+        x$solve()
+
+        if (x$get_solution()$status == "OK") {
+          cli::cli_alert_success("Dependencies resolved successfully.")
+          break()
+        }
+
+        failed_pkgs <- x$get_solution()$failures[1, "failure_down"]
+        cli::cli_alert_warning("Failed to resolve dependencies. Failed packages: {.val {failed_pkgs}}.")
+
+        for (pkg in failed_pkgs) {
+          pkg_ref <- find_ref(pkg, lookup_refs)
+          if (length(pkg_ref) == 0) {
+            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code {lookup_refs}} list.")
+            break()
+          }
+          cli::cli_alert_info("Adding package {.pkg {pkg}} (ref: {.val {pkg_ref$ref}}) to the {.field Config/Needs/DepsDev} field.")
+          desc_field_append(d, "Config/Needs/DepsDev", pkg_ref$ref)
+          d$write(path)
+        }
+
+        cli::cli_alert_info("Trying to resolve dependencies again.")
+        x <- pkgdepends::new_pkg_deps(path, config = list(dependencies = dependency_types))
+      }
+
+      desc_field_clear_if_empty(d, "Config/Needs/DepsDev")
+      d$write(path)
+      cat("::endgroup::\n")
+
+      cat("::group::Print added field\n")
+      cat(d$get("Config/Needs/DepsDev"))
+      cat("\n")
+      cat("::endgroup::\n")
+
+      cat("::group::Print DESCRIPTION file\n")
+      d
+      cat("::endgroup::\n")
+    shell: Rscript {0}
+
+  - uses: r-lib/actions/setup-r-dependencies@v2
+    if: ${{ !inputs.skip-install }}
+    with:
       working-directory: ${{ inputs.repository-path }}
+      extra-packages: ${{ inputs.extra-packages }}
+      needs: |
+        ${{ steps.dep-types.outputs.needs }}
+        DepsBranch
+        DepsDev
+      dependencies: ${{ inputs.dependencies }}
