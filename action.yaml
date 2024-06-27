@@ -205,7 +205,7 @@ runs:
           next
         }
 
-        desc_field_append("Config/Needs/DepsBranch", x_remote_ref_branch$ref)
+        desc_field_append(d, "Config/Needs/DepsBranch", x_remote_ref_branch$ref)
         cli::cli_alert_success("Package {.pkg {x_package}} added to the {.code Config/Needs/DepsBranch} field.")
       }
 
