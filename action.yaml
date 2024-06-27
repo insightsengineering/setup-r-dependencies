@@ -120,7 +120,7 @@ runs:
         system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
       }
       get_default_branch <- function() {
-        system("git remote show origin | grep \"HEAD branch\" | sed 's/.*: //'", intern = TRUE)
+        sub("origin/", "", system("git symbolic-ref refs/remotes/origin/HEAD --short", intern = TRUE))
       }
       remote_ref_add_branch <- function(remote_ref, branch_name) {
         pkgdepends::parse_pkg_ref(
