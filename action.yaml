@@ -70,9 +70,10 @@ runs:
       packages: |
         any::sessioninfo
       extra-packages: |
-        pkgdepends
-        cli
-        desc
+        any::pkgdepends
+        any::cli
+        any::desc
+      install-pandoc: false
 
   - name: Prepare DESCRIPTION file (feature branch)
     if: ${{ inputs.skip-desc-branch == 'false' }}
@@ -147,13 +148,30 @@ runs:
       }
       cat("::endgroup::\n")
 
-      cat("::parse inputs::\n")
-      lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
+      cat("::group::Parse inputs\n")
+      lookup_refs <- parse_input({{ inputs.lookup-refs }})
       cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
-      extra_deps <- parse_input("${{ inputs.extra-deps }}")
+      extra_deps <- parse_input({{ inputs.extra-deps }})
       cli::cli_alert_info("Extra dependencies: {.val {extra_deps}}.")
-      path <- "${{ inputs.repository-path }}"
+      path <- "{{ inputs.repository-path }}"
       cli::cli_alert_info("Repository path: {.val {path}}.")
+      cat("::endgroup::\n")
+
+      cat("::group::Assertions\n")
+      if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
+        cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
+        return()
+      }
+      if (length(lookup_refs) == 0 || lookup_refs == "") {
+        cli::cli_alert_danger("No lookup refs provided. Skipping.")
+        return()
+      }
+      parsed_lookup_refs <- pkgdepends::parse_pkg_refs(lookup_refs)
+      if (any(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))) {
+        incorrect_idx <- which(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))
+        cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
+        return()
+      }
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
@@ -265,11 +283,28 @@ runs:
       }
       cat("::endgroup::\n")
 
-      cat("::parse inputs::\n")
+      cat("::group::Parse inputs\n")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
       path <- "${{ inputs.repository-path }}"
       cli::cli_alert_info("Repository path: {.val {path}}.")
+      cat("::endgroup::\n")
+
+      cat("::group::Assertions\n")
+      if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
+        cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
+        return()
+      }
+      if (length(lookup_refs) == 0 || lookup_refs == "") {
+        cli::cli_alert_danger("No lookup refs provided. Skipping.")
+        return()
+      }
+      parsed_lookup_refs <- pkgdepends::parse_pkg_refs(lookup_refs)
+      if (any(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))) {
+        incorrect_idx <- which(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))
+        cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
+        return()
+      }
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
