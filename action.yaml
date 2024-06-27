@@ -13,11 +13,16 @@ inputs:
     required: false
     default: "."
   lookup-refs:
-    description: List of package references to be used for the feature branch. Multiple entries in new lines or separated by commas.
+    description: |
+      List of package references to be used for the feature branch.
+      Multiple entries in new lines or separated by commas.
     required: false
     default: ""
   extra-deps:
-    description: List of extra dependencies to check against feature branch existence. Multiple entries in new lines or separated by commas. It allows to control indirect dependencies. This requires an entry in the `lookup-refs` input.
+    description: |
+      List of extra dependencies to check against feature branch existence.
+      Multiple entries in new lines or separated by commas. It allows to control indirect dependencies.
+      This requires an entry in the `lookup-refs` input.
     required: false
     default: ""
   dependencies:
@@ -29,7 +34,9 @@ inputs:
     required: false
     default: ""
   needs:
-    description: Passed to `r-lib/actions/setup-r-dependencies`. The value will be amended by `DepsBranch` and `DepsDev` values.
+    description: |
+      Passed to `r-lib/actions/setup-r-dependencies`.
+      The value will be amended by `DepsBranch` and `DepsDev` values.
     required: false
     default: ""
   skip-desc-branch:
