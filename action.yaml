@@ -64,6 +64,10 @@ runs:
     run: git config --global --add safe.directory $(pwd)
     shell: bash
 
+  - name: Get branch names
+    id: branch-names
+    uses: tj-actions/branch-names@v8
+
   - name: Install required packages
     uses: r-lib/actions/setup-r-dependencies@v2
     with:
@@ -76,7 +80,9 @@ runs:
       install-pandoc: false
 
   - name: Prepare DESCRIPTION file (feature branch)
-    if: ${{ inputs.skip-desc-branch == 'false' }}
+    if: >
+      inputs.skip-desc-branch == 'false' ||
+      steps.branch-names.outputs.is_default == "true"
     id: desc-branch
     shell: Rscript {0}
     run: |
@@ -118,9 +124,6 @@ runs:
       }
       get_current_branch <- function() {
         system("git rev-parse --abbrev-ref HEAD", intern = TRUE)
-      }
-      get_default_branch <- function() {
-        sub("origin/", "", system("git symbolic-ref refs/remotes/origin/HEAD --short", intern = TRUE))
       }
       remote_ref_add_branch <- function(remote_ref, branch_name) {
         pkgdepends::parse_pkg_ref(
@@ -177,13 +180,6 @@ runs:
       cat("::group::Modify DESCRIPTION file\n")
       current_branch <- get_current_branch()
       cli::cli_alert_info("Current branch: {.field {current_branch}}.")
-      default_branch <- get_default_branch()
-      cli::cli_alert_info("Default branch: {.field {default_branch}}.")
-
-      if (identical(current_branch, default_branch)) {
-        cli::cli_alert_info("Current branch {.field {current_branch}} is the default branch. Skipping.")
-        return()
-      }
 
       d <- desc::desc(path)
       desc_field_create(d, "Config/Needs/DepsBranch")
