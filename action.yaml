@@ -16,6 +16,7 @@ inputs:
     description: |
       List of package references to be used for the feature branch.
       Multiple entries in new lines or separated by commas.
+      Only GitHub references are supported.
     required: false
     default: ""
   extra-deps:
