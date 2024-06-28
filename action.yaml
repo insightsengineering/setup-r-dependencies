@@ -136,17 +136,15 @@ runs:
       }
       new_pkg_deps <- function(path) {
         needs <- sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]])
-        cat("Needs: ")
-        cat(needs)
-        cat("\n")
+        print("Needs: ")
+        print(needs)
         deps <- c(
           needs,
           "DepsBranch",
           "DepsDev",
           pkgdepends::as_pkg_dependencies(${{ inputs.dependencies }})$direct
         )
-        cat(deps)
-        cat("\n")
+        print(deps)
         pkgdepends::new_pkg_deps(
           path,
           config = list(
