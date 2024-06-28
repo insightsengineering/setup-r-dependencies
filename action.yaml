@@ -89,7 +89,11 @@ runs:
       }
       desc_field_append <- function(d, key, value) {
         old_values <- d$get_field(key)
-        new_values <- paste0(old_values, value, collapse = ", ")
+        new_values <- if (identical(trimws(old_values), "")) {
+          value
+        } else {
+          paste(old_values, value, sep = ", ")
+        }
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
@@ -234,7 +238,11 @@ runs:
       }
       desc_field_append <- function(d, key, value) {
         old_values <- d$get_field(key)
-        new_values <- paste0(old_values, value, collapse = ", ")
+        new_values <- if (identical(trimws(old_values), "")) {
+          value
+        } else {
+          paste(old_values, value, sep = ", ")
+        }
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
