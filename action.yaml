@@ -68,9 +68,9 @@ runs:
   - name: Install required packages
     uses: r-lib/actions/setup-r-dependencies@v2
     with:
-      packages: |
-        any::sessioninfo
+      packages: ""
       extra-packages: |
+        any::sessioninfo
         any::pkgdepends
         any::cli
         any::desc
@@ -156,6 +156,8 @@ runs:
       cli::cli_alert_info("Extra dependencies: {.val {extra_deps}}.")
       path <- "${{ inputs.repository-path }}"
       cli::cli_alert_info("Repository path: {.val {path}}.")
+      needs <- sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]])
+      cli::cli_alert_info("Needs: {.val {needs}}.")
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
@@ -178,8 +180,16 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
-      d <- desc::desc(path)
-      desc_field_create(d, "Config/Needs/DepsBranch")
+      x <- pkgdepends::new_pkg_deps(
+        path,
+        config = list(
+          dependencies = c(
+            needs,
+            (${{ inputs.dependencies }}))
+        )
+      )
+      x$solve()
+      d <- x$get_resolution()[1, "extra"][[1]]$description
 
       deps <- d$get_deps()
       if (length(extra_deps) > 0 && !identical(extra_deps, "")) {
@@ -272,6 +282,18 @@ runs:
         }
         return(res)
       }
+      new_pkg_deps <- function(path) {
+        pkgdepends::new_pkg_deps(
+          path,
+          config = list(
+            dependencies = c(
+              needs,
+              "DepsBranch",
+              "DepsDev",
+              (${{ inputs.dependencies }}))
+          )
+        )
+      }
       parse_input <- function(input) {
         gsub("\n", ",", input) |>
           strsplit(x = _, split = ",") |>
@@ -285,6 +307,8 @@ runs:
       cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
       path <- "${{ inputs.repository-path }}"
       cli::cli_alert_info("Repository path: {.val {path}}.")
+      needs <- sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]])
+      cli::cli_alert_info("Needs: {.val {needs}}.")
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
@@ -305,16 +329,11 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
-      d <- desc::desc(path)
+      x <- new_pkg_deps(path)
+      x$solve()
+      d <- x$get_resolution()[1, "extra"][[1]]$description
+
       desc_field_create(d, "Config/Needs/DepsDev")
-
-      dependency_types <- c(
-        pkgdepends::as_pkg_dependencies(TRUE)$direct,
-        "Config/Needs/DepsBranch",
-        "Config/Needs/DepsDev"
-      )
-
-      x <- pkgdepends::new_pkg_deps(path, config = list(dependencies = dependency_types))
 
       while (TRUE) {
         x$solve()
@@ -339,7 +358,7 @@ runs:
         }
 
         cli::cli_alert_info("Trying to resolve dependencies again.")
-        x <- pkgdepends::new_pkg_deps(path, config = list(dependencies = dependency_types))
+        x <- new_pkg_deps(path)
       }
 
       desc_field_clear_if_empty(d, "Config/Needs/DepsDev")
@@ -361,7 +380,7 @@ runs:
       working-directory: ${{ inputs.repository-path }}
       extra-packages: ${{ inputs.extra-packages }}
       needs: |
-        ${{ steps.dep-types.outputs.needs }}
+        ${{ inputs.needs }}
         DepsBranch
         DepsDev
       dependencies: ${{ inputs.dependencies }}
