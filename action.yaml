@@ -333,6 +333,7 @@ runs:
 
   - name: Remove utils
     id: remove-utils
+    shell: bash
     run: rm utils.R
 
   - uses: r-lib/actions/setup-r-dependencies@v2
