@@ -135,24 +135,15 @@ runs:
         x$get_solution()$status == "OK"
       }
       new_pkg_deps <- function(path) {
-        needs <- sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]])
-        print("Needs: ")
-        print(needs)
-        deps <- c(
-          needs,
-          "DepsBranch",
-          "DepsDev",
-          pkgdepends::as_pkg_dependencies(${{ inputs.dependencies }})$direct
-        )
-        print(deps)
         pkgdepends::new_pkg_deps(
           path,
           config = list(
             dependencies = c(
-              needs,
-              "DepsBranch",
-              "DepsDev",
-              (${{ inputs.dependencies }}))
+              sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]]),
+              "Config/Needs/DepsBranch",
+              "Config/Needs/DepsDev",
+              pkgdepends::as_pkg_dependencies(${{ inputs.dependencies }})$direct
+            )
           )
         )
       }
