@@ -292,6 +292,7 @@ runs:
 
       d$set_list("Config/Needs/DepsDev", character(0))
 
+      failures_prev <- NULL
       while (TRUE) {
         x$solve()
 
@@ -300,13 +301,21 @@ runs:
           break()
         }
 
-        failed_pkgs <- x$get_solution()$failures[1, "failure_down"][[1]]
-        cli::cli_alert_warning("Failed to resolve dependencies. Failed packages: {.val {failed_pkgs}}.")
+        failures <- x$get_solution()$failures
+        failed_pkgs <- failures[1, "failure_down"][[1]]
+        cli::cli_alert_warning("Failed to resolve dependencies. Failed packages: {.pkg {failed_pkgs}}.")
+        failures
+
+        if (identical(failures, failures_prev)) {
+          cli::cli_alert_danger("Failed to resolve dependencies. No progress. Exiting.")
+          break()
+        }
+        failures_prev <- failures
 
         for (pkg in failed_pkgs) {
           pkg_ref <- find_ref(pkg, lookup_refs)
           if (length(pkg_ref) == 0) {
-            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code {lookup_refs}} list.")
+            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code {lookup_refs}} list. Exiting.")
             break()
           }
           cli::cli_alert_info("Adding package {.pkg {pkg}} (ref: {.val {pkg_ref$ref}}) to the {.field Config/Needs/DepsDev} field.")
