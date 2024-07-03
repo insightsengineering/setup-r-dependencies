@@ -300,7 +300,7 @@ runs:
           break()
         }
 
-        failed_pkgs <- x$get_solution()$failures[1, "failure_down"]
+        failed_pkgs <- x$get_solution()$failures[1, "failure_down"][[1]]
         cli::cli_alert_warning("Failed to resolve dependencies. Failed packages: {.val {failed_pkgs}}.")
 
         for (pkg in failed_pkgs) {
