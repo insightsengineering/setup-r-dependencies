@@ -149,6 +149,13 @@ runs:
       parse_input <- function(input) {
         trimws(strsplit(x = gsub("\n", ",", input), split = ",")[[1]])
       }
+      log_vars <- function(...) {
+        args <- list(...)
+        arg_names <- substitute(...())
+        for (i in seq_along(args)) {
+          cli::cli_alert_info("Variable {.code {arg_names[[i]]}}: {.val {args[[i]]}}.")
+        }
+      }
       cat("::endgroup::\n")
       cat("::group::Save utils\n")
       save.image(file = "utils.R")
@@ -168,11 +175,10 @@ runs:
 
       cat("::group::Parse inputs\n")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
-      cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
       extra_deps <- parse_input("${{ inputs.extra-deps }}")
-      cli::cli_alert_info("Extra dependencies: {.val {extra_deps}}.")
       path <- "${{ inputs.repository-path }}"
-      cli::cli_alert_info("Repository path: {.val {path}}.")
+      current_branch <- "${{ steps.branch-names.outputs.current_branch }}"
+      log_vars(lookup_refs, extra_deps, path, current_branch)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
@@ -190,8 +196,6 @@ runs:
         cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
         return()
       }
-      current_branch <- "${{ steps.branch-names.outputs.current_branch }}"
-      cli::cli_alert_info("Current branch: {.field {current_branch}}.")
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file\n")
@@ -259,9 +263,8 @@ runs:
 
       cat("::group::Parse inputs\n")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
-      cli::cli_alert_info("Lookup refs: {.val {lookup_refs}}.")
-      path <- "${{ inputs.repository-path }}"
-      cli::cli_alert_info("Repository path: {.val {path}}.")
+      path <- parse_input("${{ inputs.repository-path }}")
+      log_vars(lookup_refs, path)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
