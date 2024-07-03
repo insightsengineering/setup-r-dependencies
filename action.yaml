@@ -161,7 +161,6 @@ runs:
       save.image(file = "utils.R")
       cat("::endgroup::\n")
 
-
   - name: Prepare DESCRIPTION file (feature branch)
     if: >
       inputs.skip-desc-branch == 'false' ||
@@ -215,7 +214,7 @@ runs:
         x_type <- deps[i, "type"]
         x_package <- deps[i, "package"]
         x_version_str <- deps[i, "version"]
-        cli::cli_alert_info("Processing package {.pkg {x_package}}.")
+        cli::cli_alert_info("Processing dependent package {.pkg {x_package}}.")
 
         if (x_package %in% c("R", "base", "utils", "stats", "graphics", "grDevices", "datasets", "methods", "tools", "parallel", "compiler")) {
           cli::cli_alert_info("Package {.pkg {x_package}} is a base package. Skipping.")
@@ -250,7 +249,6 @@ runs:
       cat("::group::Print DESCRIPTION file\n")
       d
       cat("::endgroup::\n")
-
 
   - name: Prepare DESCRIPTION file (development)
     if: ${{ inputs.skip-desc-dev == 'false' }}
