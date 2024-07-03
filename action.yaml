@@ -96,13 +96,12 @@ runs:
         }
       }
       find_ref <- function(package, refs) {
-        res <- pkgdepends::parse_pkg_refs(refs) |>
-          Filter(
-            x = _,
-            f = function(ref) {
-              ref$package == package
-            }
-          )
+        res <- Filter(
+          x = pkgdepends::parse_pkg_refs(refs),
+          f = function(ref) {
+            ref$package == package
+          }
+        )
         if (length(res) == 0) {
           return(NULL)
         }
@@ -148,10 +147,7 @@ runs:
         )
       }
       parse_input <- function(input) {
-        gsub("\n", ",", input) |>
-          strsplit(x = _, split = ",") |>
-          _[[1]] |>
-          trimws()
+        trimws(strsplit(x = gsub("\n", ",", input), split = ",")[[1]])
       }
       cat("::endgroup::\n")
       cat("::group::Save utils\n")
