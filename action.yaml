@@ -176,8 +176,8 @@ runs:
       cat("::group::Parse inputs\n")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       extra_deps <- parse_input("${{ inputs.extra-deps }}")
-      path <- "${{ inputs.repository-path }}"
-      current_branch <- "${{ steps.branch-names.outputs.current_branch }}"
+      path <- parse_input("${{ inputs.repository-path }}")
+      current_branch <- parse_input("${{ steps.branch-names.outputs.current_branch }}")
       log_vars(lookup_refs, extra_deps, path, current_branch)
       cat("::endgroup::\n")
 
