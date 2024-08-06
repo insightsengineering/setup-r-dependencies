@@ -183,17 +183,20 @@ runs:
       cat("::group::Assertions\n")
       if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
         cli::cli_alert_danger("No lookup refs provided. Skipping.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       parsed_lookup_refs <- pkgdepends::parse_pkg_refs(lookup_refs)
       if (any(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))) {
         incorrect_idx <- which(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))
         cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       cat("::endgroup::\n")
 
@@ -268,17 +271,20 @@ runs:
       cat("::group::Assertions\n")
       if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
         cli::cli_alert_danger("No lookup refs provided. Skipping.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       parsed_lookup_refs <- pkgdepends::parse_pkg_refs(lookup_refs)
       if (any(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))) {
         incorrect_idx <- which(!vapply(parsed_lookup_refs, is, logical(1), "remote_ref_github"))
         cli::cli_alert_danger("All lookup refs must be GH refs. Incorrect refs: {.val {lookup_refs[incorrect_idx]}}.")
-        return()
+        cat("::endgroup::\n")
+        q(save = "no")
       }
       cat("::endgroup::\n")
 
