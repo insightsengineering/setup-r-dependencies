@@ -52,6 +52,10 @@ inputs:
     description: Skip the installation of R package dependencies.
     required: false
     default: false
+  max-iter:
+    description: Maximum number of iterations to resolve dependencies.
+    required: false
+    default: 50
 
 branding:
   icon: 'download'
@@ -83,11 +87,9 @@ runs:
       cat("::group::Define utils\n")
       desc_field_append <- function(d, key, value) {
         old_values <- d$get_field(key)
-        new_values <- if (identical(trimws(old_values), "")) {
-          value
-        } else {
-          paste(old_values, value, sep = ", ")
-        }
+        old_values_v <- trimws(strsplit(x = old_values, split = ",")[[1]])
+        new_values_v <- unique(c(old_values_v, value))
+        new_values <- paste(new_values_v, collapse = ", ")
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
@@ -200,7 +202,7 @@ runs:
       }
       cat("::endgroup::\n")
 
-      cat("::group::Modify DESCRIPTION file\n")
+      cat("::group::Modify DESCRIPTION file (feature branch)\n")
       x <- new_pkg_deps(path)
       x$solve()
       d <- x$get_resolution()[1, "extra"][[1]]$description
@@ -265,7 +267,8 @@ runs:
       cat("::group::Parse inputs\n")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       path <- parse_input("${{ inputs.repository-path }}")
-      log_vars(lookup_refs, path)
+      max_iter <- as.integer("${{ inputs.max-iter }}")
+      log_vars(lookup_refs, path, max_iter)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
@@ -288,15 +291,18 @@ runs:
       }
       cat("::endgroup::\n")
 
-      cat("::group::Modify DESCRIPTION file\n")
+      cat("::group::Modify DESCRIPTION file (development)\n")
       x <- new_pkg_deps(path)
       x$solve()
       d <- x$get_resolution()[1, "extra"][[1]]$description
 
       d$set_list("Config/Needs/DepsDev", character(0))
 
-      failures_prev <- NULL
-      while (TRUE) {
+      i <- 0L
+      failures_message_prev <- NULL
+      while (i <= max_iter) {
+        i <- i + 1L
+
         x$solve()
 
         if (x$get_solution()$status == "OK") {
@@ -305,17 +311,19 @@ runs:
         }
 
         failures <- x$get_solution()$failures
-        failed_pkgs <- failures[1, "failure_down"][[1]]
-        cli::cli_alert_warning("Failed to resolve dependencies. Failed packages: {.pkg {failed_pkgs}}.")
-        failures
+        failed_refs <- failures[1, "failure_down"][[1]]
+        cli::cli_alert_warning("Failed to resolve dependencies. Failed refs: {.pkg {failed_refs}}.")
+        print(failures)
 
-        if (identical(failures, failures_prev)) {
+        failure_message <- failures$failure_message
+        if (identical(failure_message, failures_message_prev)) {
           cli::cli_alert_danger("Failed to resolve dependencies. No progress. Exiting.")
           break()
         }
-        failures_prev <- failures
+        failures_message_prev <- failure_message
 
-        for (pkg in failed_pkgs) {
+        for (failed_ref in failed_refs) {
+          pkg <- pkgdepends::parse_pkg_ref(failed_ref)$package
           pkg_ref <- find_ref(pkg, lookup_refs)
           if (length(pkg_ref) == 0) {
             cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code {lookup_refs}} list. Exiting.")
