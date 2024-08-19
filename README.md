@@ -98,6 +98,14 @@ Insights Engineering
 
     _Default_: `false`
 
+* `max-iter`:
+
+    _Description_: Maximum number of iterations to resolve dependencies.
+
+    _Required_: `false`
+
+    _Default_: `10`
+
 
 ## Outputs
 
