@@ -166,7 +166,7 @@ runs:
   - name: Prepare DESCRIPTION file (feature branch)
     if: >
       inputs.skip-desc-branch == 'false' ||
-      steps.branch-names.outputs.is_default == 'true'
+      steps.branch-names.outputs.is_default != 'true'
     id: desc-branch
     shell: Rscript {0}
     run: |
