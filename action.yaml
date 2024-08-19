@@ -55,7 +55,7 @@ inputs:
   max-iter:
     description: Maximum number of iterations to resolve dependencies.
     required: false
-    default: 50
+    default: 10
 
 branding:
   icon: 'download'
