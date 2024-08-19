@@ -313,7 +313,7 @@ runs:
         failures <- x$get_solution()$failures
         failed_refs <- failures[1, "failure_down"][[1]]
         cli::cli_alert_warning("Failed to resolve dependencies. Failed refs: {.pkg {failed_refs}}.")
-        print(failures)
+        cat(format(failures))
 
         failure_message <- failures$failure_message
         if (identical(failure_message, failures_message_prev)) {
