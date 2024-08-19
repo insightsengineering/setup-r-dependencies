@@ -104,7 +104,7 @@ Insights Engineering
 
     _Required_: `false`
 
-    _Default_: `50`
+    _Default_: `10`
 
 
 ## Outputs
