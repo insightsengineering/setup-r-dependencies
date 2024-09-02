@@ -311,9 +311,12 @@ runs:
         }
 
         failures <- x$get_solution()$failures
-        failed_refs <- failures[1, "failure_down"][[1]]
+        failed_refs <- unique(unlist(failures[, "failure_down"]))
         cli::cli_alert_warning("Failed to resolve dependencies. Failed refs: {.pkg {failed_refs}}.")
+        cli::cli_text("Error:")
         cat(format(failures))
+        cat("\n")
+        cli::cli_text("End of error")
 
         failure_message <- failures$failure_message
         if (identical(failure_message, failures_message_prev)) {
@@ -326,7 +329,7 @@ runs:
           pkg <- pkgdepends::parse_pkg_ref(failed_ref)$package
           pkg_ref <- find_ref(pkg, lookup_refs)
           if (length(pkg_ref) == 0) {
-            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code {lookup_refs}} list. Exiting.")
+            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code lookup_refs} list: {.val {lookup_refs}}. Exiting.")
             break()
           }
           cli::cli_alert_info("Adding package {.pkg {pkg}} (ref: {.val {pkg_ref$ref}}) to the {.field Config/Needs/DepsDev} field.")
@@ -335,6 +338,7 @@ runs:
         }
 
         cli::cli_alert_info("Trying to resolve dependencies again.")
+        cli::cli_text("---")
         x <- new_pkg_deps(path)
       }
 
