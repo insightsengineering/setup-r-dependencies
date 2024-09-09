@@ -247,7 +247,7 @@ runs:
       path <- parse_input("${{ inputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       max_iter <- as.integer("${{ inputs.max-iter }}")
-      log_vars(path, lookup_refs, extra_deps, max_iter)
+      log_vars(path, lookup_refs, max_iter)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
