@@ -93,7 +93,7 @@ runs:
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
-        if (d$get_field(key) == "") {
+        if (d$has_fields(key) && d$get_field(key) == "") {
           d$del(key)
         }
       }
@@ -136,8 +136,13 @@ runs:
         x$get_solution()$status == "OK"
       }
       new_pkg_deps <- function(path) {
-        pkgdepends::new_pkg_deps(
+        ref <- c(
           path,
+          ${{ inputs.extra-deps }}
+        )
+        ref <- ref[ref != ""]
+        pkgdepends::new_pkg_deps(
+          ref,
           config = list(
             dependencies = c(
               sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]]),
@@ -166,7 +171,8 @@ runs:
   - name: Prepare DESCRIPTION file (feature branch)
     if: >
       inputs.skip-desc-branch == 'false' &&
-      steps.branch-names.outputs.is_default != 'true'
+      steps.branch-names.outputs.is_default != 'true' &&
+      inputs.lookup-refs != ''
     id: desc-branch
     shell: Rscript {0}
     run: |
@@ -175,21 +181,16 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Parse inputs\n")
+      path <- parse_input("${{ inputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       extra_deps <- parse_input("${{ inputs.extra-deps }}")
-      path <- parse_input("${{ inputs.repository-path }}")
       current_branch <- parse_input("${{ steps.branch-names.outputs.current_branch }}")
-      log_vars(lookup_refs, extra_deps, path, current_branch)
+      log_vars(path, lookup_refs, extra_deps, current_branch)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
       if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
-        cat("::endgroup::\n")
-        q(save = "no")
-      }
-      if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
-        cli::cli_alert_danger("No lookup refs provided. Skipping.")
         cat("::endgroup::\n")
         q(save = "no")
       }
@@ -203,43 +204,32 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file (feature branch)\n")
-      x <- new_pkg_deps(path)
-      x$solve()
-      d <- x$get_resolution()[1, "extra"][[1]]$description
-
+      d <- desc::desc(path)
       d$set_list("Config/Needs/DepsBranch", character(0))
 
-      deps <- d$get_deps()
-      if (length(extra_deps) > 0 && !identical(extra_deps, "")) {
-        cli::cli_alert_info("Adding extra dependencies: {.val {paste(extra_deps, collapse = \", \")}}.")
-        deps <- rbind(deps, data.frame(type = "Extra", package = extra_deps, version = "*"))
-      }
+      x <- new_pkg_deps(sprintf("local::%s", path))
+      x$resolve()
+      deps <- x$get_resolution()$package
 
-      for (i in seq_len(nrow(deps))) {
-        x_type <- deps[i, "type"]
-        x_package <- deps[i, "package"]
-        x_version_str <- deps[i, "version"]
-        cli::cli_alert_info("Processing dependent package {.pkg {x_package}}.")
+      for (i_ref in lookup_refs) {
+        cli::cli_alert_info("Processing lookup reference {.field {i_ref}}.")
 
-        if (x_package %in% c("R", "base", "utils", "stats", "graphics", "grDevices", "datasets", "methods", "tools", "parallel", "compiler")) {
-          cli::cli_alert_info("Package {.pkg {x_package}} is a base package. Skipping.")
+        i_remote_ref <- pkgdepends::parse_pkg_ref(i_ref)
+        i_package <- i_remote_ref$package
+
+        if (isFALSE(i_package %in% deps)) {
+          cli::cli_alert_info("Package {.pkg {i_package}} is not a dependency. Skipping.")
           next
         }
 
-        x_remote_ref <- find_ref(x_package, lookup_refs)
-        if (length(x_remote_ref) == 0) {
-          cli::cli_alert_info("Package {.pkg {x_package}} not found in the {.code lookup_refs} list. Skipping.")
+        i_remote_ref_branch <- remote_ref_add_branch(i_remote_ref, current_branch)
+        if (isFALSE(remote_ref_ping(i_remote_ref_branch))) {
+          cli::cli_alert_info("Feature branch {.field {current_branch}} does not exist for reference {.field {i_ref}}. Skipping.")
           next
         }
 
-        x_remote_ref_branch <- remote_ref_add_branch(x_remote_ref, current_branch)
-        if (isFALSE(remote_ref_ping(x_remote_ref_branch))) {
-          cli::cli_alert_info("Feature branch {.field {current_branch}} does not exist for package {.pkg {x_package}}. Skipping.")
-          next
-        }
-
-        desc_field_append(d, "Config/Needs/DepsBranch", x_remote_ref_branch$ref)
-        cli::cli_alert_success("Package {.pkg {x_package}} added to the {.code Config/Needs/DepsBranch} field.")
+        desc_field_append(d, "Config/Needs/DepsBranch", i_remote_ref_branch$ref)
+        cli::cli_alert_success("Reference {.field {i_remote_ref_branch$ref}} added to the {.field Config/Needs/DepsBranch} field.")
       }
 
       desc_field_clear_if_empty(d, "Config/Needs/DepsBranch")
@@ -256,7 +246,9 @@ runs:
       cat("::endgroup::\n")
 
   - name: Prepare DESCRIPTION file (development)
-    if: ${{ inputs.skip-desc-dev == 'false' }}
+    if: >
+      ${{ inputs.skip-desc-dev == 'false' }} &&
+      ${{ inputs.lookup-refs != '' }}
     id: desc-dev
     shell: Rscript {0}
     run: |
@@ -265,20 +257,16 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Parse inputs\n")
-      lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       path <- parse_input("${{ inputs.repository-path }}")
+      lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
+      extra_deps <- parse_input("${{ inputs.extra-deps }}")
       max_iter <- as.integer("${{ inputs.max-iter }}")
-      log_vars(lookup_refs, path, max_iter)
+      log_vars(path, lookup_refs, extra_deps, max_iter)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
       if (isFALSE(file.exists(file.path(path, "DESCRIPTION")))) {
         cli::cli_alert_danger("{.file DESCRIPTION} file not found in {.path {path}}. Skipping.")
-        cat("::endgroup::\n")
-        q(save = "no")
-      }
-      if (length(lookup_refs) == 0 || identical(lookup_refs, "")) {
-        cli::cli_alert_danger("No lookup refs provided. Skipping.")
         cat("::endgroup::\n")
         q(save = "no")
       }
@@ -292,11 +280,11 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Modify DESCRIPTION file (development)\n")
-      x <- new_pkg_deps(path)
-      x$solve()
-      d <- x$get_resolution()[1, "extra"][[1]]$description
-
+      d <- desc::desc(path)
       d$set_list("Config/Needs/DepsDev", character(0))
+
+      x <- new_pkg_deps(sprintf("local::%s", path))
+      x$solve()
 
       i <- 0L
       failures_message_prev <- NULL
@@ -339,7 +327,7 @@ runs:
 
         cli::cli_alert_info("Trying to resolve dependencies again.")
         cli::cli_text("---")
-        x <- new_pkg_deps(path)
+        x <- new_pkg_deps(sprintf("local::%s", path))
       }
 
       desc_field_clear_if_empty(d, "Config/Needs/DepsDev")
