@@ -42,14 +42,6 @@ Insights Engineering
 
     _Default_: `""`
 
-* `extra-deps`:
-
-    _Description_: List of extra dependencies to check against feature branch existence. Multiple entries in new lines or separated by commas. It allows to control indirect dependencies. This requires an entry in the `lookup-refs` input.
-
-    _Required_: `false`
-
-    _Default_: `""`
-
 * `dependencies`:
 
     _Description_: Passed to `r-lib/actions/setup-r-dependencies`.

@@ -19,13 +19,6 @@ inputs:
       Only GitHub references are supported.
     required: false
     default: ""
-  extra-deps:
-    description: |
-      List of extra dependencies to check against feature branch existence.
-      Multiple entries in new lines or separated by commas. It allows to control indirect dependencies.
-      This requires an entry in the `lookup-refs` input.
-    required: false
-    default: ""
   dependencies:
     description: Passed to `r-lib/actions/setup-r-dependencies`.
     required: false
@@ -135,14 +128,9 @@ runs:
         x$solve()
         x$get_solution()$status == "OK"
       }
-      new_pkg_deps <- function(path) {
-        ref <- c(
-          path,
-          ${{ inputs.extra-deps }}
-        )
-        ref <- ref[ref != ""]
+      new_pkg_deps <- function(refs) {
         pkgdepends::new_pkg_deps(
-          ref,
+          refs,
           config = list(
             dependencies = c(
               sprintf("Config/Needs/%s", strsplit("${{ inputs.needs }}", "[[:space:],]+")[[1]]),
@@ -183,9 +171,8 @@ runs:
       cat("::group::Parse inputs\n")
       path <- parse_input("${{ inputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
-      extra_deps <- parse_input("${{ inputs.extra-deps }}")
       current_branch <- parse_input("${{ steps.branch-names.outputs.current_branch }}")
-      log_vars(path, lookup_refs, extra_deps, current_branch)
+      log_vars(path, lookup_refs, current_branch)
       cat("::endgroup::\n")
 
       cat("::group::Assertions\n")
@@ -259,7 +246,6 @@ runs:
       cat("::group::Parse inputs\n")
       path <- parse_input("${{ inputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
-      extra_deps <- parse_input("${{ inputs.extra-deps }}")
       max_iter <- as.integer("${{ inputs.max-iter }}")
       log_vars(path, lookup_refs, extra_deps, max_iter)
       cat("::endgroup::\n")
