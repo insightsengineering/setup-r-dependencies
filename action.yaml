@@ -66,11 +66,11 @@ runs:
     id: current-branch-or-tag
     run: |
       if [ "${{ steps.branch-name.outputs.is_tag }}" == "true" ]; then
-        echo "Current tag: ${{ steps.branch-name.outputs.tag }}"
-        echo "ref-name=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_OUTPUT
+        echo "Current tag: ${{ steps.branch-names.outputs.tag }}"
+        echo "ref-name=${{ steps.branch-names.outputs.tag }}" >> $GITHUB_OUTPUT
       else
-        echo "Current branch: ${{ steps.branch-name.outputs.current_branch }}"
-        echo "ref-name=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_OUTPUT
+        echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}"
+        echo "ref-name=${{ steps.branch-names.outputs.current_branch }}" >> $GITHUB_OUTPUT
       fi
     shell: bash
 
