@@ -65,7 +65,7 @@ runs:
   - name: Get current branch or tag 🏷️
     id: current-branch-or-tag
     run: |
-      if [ "${{ steps.branch-name.outputs.is_tag }}" == "true" ]; then
+      if [ "${{ steps.branch-names.outputs.is_tag }}" == "true" ]; then
         echo "Current tag: ${{ steps.branch-names.outputs.tag }}"
         echo "ref-name=${{ steps.branch-names.outputs.tag }}" >> $GITHUB_OUTPUT
       else
