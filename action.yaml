@@ -62,6 +62,18 @@ runs:
     id: branch-names
     uses: tj-actions/branch-names@v8
 
+  - name: Get current branch or tag 🏷️
+    id: current-branch-or-tag
+    run: |
+      if [ "${{ steps.branch-name.outputs.is_tag }}" == "true" ]; then
+        echo "Current tag: ${{ steps.branch-name.outputs.tag }}"
+        echo "ref-name=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_OUTPUT
+      else
+        echo "Current branch: ${{ steps.branch-name.outputs.current_branch }}"
+        echo "ref-name=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_OUTPUT
+      fi
+    shell: bash
+
   - name: Install required packages
     uses: r-lib/actions/setup-r-dependencies@v2
     with:
@@ -171,7 +183,7 @@ runs:
       cat("::group::Parse inputs\n")
       path <- parse_input("${{ inputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
-      current_branch <- parse_input("${{ steps.branch-names.outputs.current_branch }}")
+      current_branch <- parse_input("${{ steps.current-branch-or-tag.outputs.ref-name }}")
       log_vars(path, lookup_refs, current_branch)
       cat("::endgroup::\n")
 
