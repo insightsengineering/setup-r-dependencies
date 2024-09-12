@@ -348,11 +348,12 @@ runs:
 
   - name: Set repositories
     run: |
+      OS_CODENAME=$(lsb_release --codename --short)
       cat > ${HOME}/.Rprofile <<EOF
       options(
         repos = c(
-          RSPM = "https://packagemanager.posit.co/cran/__linux__/jammy/latest",
-          CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
+          RSPM = "https://packagemanager.posit.co/cran/__linux__/${OS_CODENAME}/latest",
+          CRAN = "https://packagemanager.posit.co/cran/__linux__/${OS_CODENAME}/latest"
         )
       )
       EOF
