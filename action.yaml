@@ -346,6 +346,20 @@ runs:
     shell: bash
     run: rm utils.R
 
+  - name: Set repositories
+    run: |
+      cat > ${HOME}/.Rprofile <<EOF
+      options(
+        repos = c(
+          RSPM = "https://packagemanager.posit.co/cran/__linux__/jammy/latest",
+          CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
+        )
+      )
+      EOF
+      echo "Repositories written to ${HOME}/.Rprofile:"
+      cat ${HOME}/.Rprofile
+    shell: bash
+
   - uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
     with:
