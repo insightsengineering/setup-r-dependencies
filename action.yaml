@@ -351,8 +351,8 @@ runs:
       cat > ${HOME}/.Rprofile <<EOF
       options(
         repos = c(
-          RSPM = "https://packagemanager.posit.co/cran/__linux__/noble/latest",
-          CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+          RSPM = "https://packagemanager.posit.co/cran/__linux__/focal/latest",
+          CRAN = "https://packagemanager.posit.co/cran/__linux__/focal/latest"
         )
       )
       EOF
