@@ -348,7 +348,7 @@ runs:
 
   - name: Set repositories
     run: |
-      OS_CODENAME=$(lsb_release --codename --short)
+      OS_CODENAME=$(lsb_release --codename --short | tail)
       cat > ${HOME}/.Rprofile <<EOF
       options(
         repos = c(
