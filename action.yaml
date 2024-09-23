@@ -368,7 +368,6 @@ runs:
         package_manager_url="$ppm_url/latest"
       fi
       echo "package_manager_url=$package_manager_url"
-      OS_CODENAME=$(lsb_release --codename --short | tail -1)
       cat > ${HOME}/.Rprofile <<EOF
       options(
         repos = c(
