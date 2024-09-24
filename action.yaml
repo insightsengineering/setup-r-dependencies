@@ -81,7 +81,7 @@ runs:
 
   - name: Set repositories
     run: |
-      R -q -e <<RSCRIPT
+      R -s -q -e <<RSCRIPT
       if (!require("pkgcache")) install.packages("pkgcache")
       repository_list <- unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
