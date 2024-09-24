@@ -83,22 +83,15 @@ runs:
     run: |
       R -s -q <<RSCRIPT
       if (!require("pkgcache")) install.packages("pkgcache")
+      RSCRIPT
+      cat > ${HOME}/.Rprofile <<EOF
       repository_list <- unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
       ))
       options(repos = c(vapply(repository_list, pkgcache::repo_resolve, character(1))))
-      options("repos")
-      RSCRIPT
-      # cat > ${HOME}/.Rprofile <<EOF
-      # options(
-      #   repos = c(
-      #     PPM = pkgcache::repo_resolve("PPM@latest"),
-      #     getOption("repos")
-      #   )
-      # )
-      # EOF
-      # echo "Repositories written to ${HOME}/.Rprofile:"
-      # cat ${HOME}/.Rprofile
+      EOF
+      echo "Repositories written to ${HOME}/.Rprofile:"
+      cat ${HOME}/.Rprofile
     shell: bash
 
   - name: Install required packages
