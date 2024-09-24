@@ -76,7 +76,7 @@ runs:
 
   - name: Set repositories
     run: |
-      R -q -e 'if (!require("pkgcache")) install.packages("pkgcache")'
+      R -s -q -e 'if (!require("pkgcache")) install.packages("pkgcache")'
       cat > ${HOME}/.Rprofile <<EOF
       options(
         repos = c(
