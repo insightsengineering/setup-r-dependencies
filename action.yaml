@@ -76,34 +76,6 @@ runs:
 
   - name: Set repositories
     run: |
-      # echo "Runner OS: ${{ runner.os }}"
-      # echo "Runner arch: ${{ runner.arch }}"
-      # ppm_url="https://packagemanager.posit.co/cran"
-      # if [ "${{ runner.os }}" == "Linux" ]; then
-      #   if [ -n "$(cat /etc/*release | grep ID | grep fedora)" ]; then
-      #     package_manager_url="$ppm_url/__linux__/rhel9/latest"
-      #   elif [ -n "$(cat /etc/*release | grep ID | grep ubuntu)" ]; then
-      #     version_codename="$(cat /etc/*release | grep VERSION_CODENAME | cut -d'=' -f2)"
-      #     package_manager_url="$ppm_url/__linux__/$version_codename/latest"
-      #   else
-      #     echo "Detected unsupported distribution of Linux, please fix this. Details:"
-      #     cat /etc/*release
-      #     package_manager_url="$ppm_url/latest"
-      #   fi
-      # elif [ "${{ runner.os }}" == "Windows" ]; then
-      #   package_manager_url="$ppm_url/latest/bin/windows"
-      # else
-      #   package_manager_url="$ppm_url/latest"
-      # fi
-      # echo "package_manager_url=$package_manager_url"
-      # cat > ${HOME}/.Rprofile <<EOF
-      # options(
-      #   repos = c(
-      #     RSPM = "$package_manager_url",
-      #     CRAN = "$package_manager_url"
-      #   )
-      # )
-      # EOF
       R -q -e 'if (!require("pkgcache")) install.packages("pkgcache")'
       cat > ${HOME}/.Rprofile <<EOF
       options(
