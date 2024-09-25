@@ -53,7 +53,7 @@ inputs:
     description: |
       Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
     required: false
-    default: "https://pharmaverse.r-universe.dev,PPM@latest"
+    default: "PPM@latest"
 
 branding:
   icon: 'download'
