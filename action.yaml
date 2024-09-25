@@ -83,20 +83,20 @@ runs:
     run: |
       R -s -q <<RSCRIPT
       getOption("repos")
-      if (!require("pkgcache")) install.packages("pkgcache")
+      if (!require("pkgcache")) install.packages("pkgcache", repos='http://cloud.r-project.org')
       RSCRIPT
       cat > ${HOME}/.Rprofile <<EOF
       repository_list <- unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
       ))
-      options(repos = c(vapply(repository_list, pkgcache::repo_resolve, character(1))))
+      options(repos = c(vapply(repository_list, pkgcache::repo_resolve, character(1)), pkgcache::default_cran_mirror(), getOption("repos")))
       EOF
       R -s -q <<RSCRIPT
       repository_list <- unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
       ))
       cat("Resolved repositories:\n")
-      vapply(repository_list, pkgcache::repo_resolve, character(1))
+      c(vapply(repository_list, pkgcache::repo_resolve, character(1)), pkgcache::default_cran_mirror(), getOption("repos"))
       RSCRIPT
       echo "Repositories written to ${HOME}/.Rprofile:"
       cat ${HOME}/.Rprofile
