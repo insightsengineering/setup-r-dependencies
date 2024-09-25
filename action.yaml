@@ -368,12 +368,6 @@ runs:
     shell: bash
     run: rm utils.R
 
-  - name: Debug get repositories
-    run: |
-      cat("Resolved repositories loaded from .Rprofile:\n")
-      getOption("repos")
-    shell: Rscript {0}
-
   - uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
     with:
