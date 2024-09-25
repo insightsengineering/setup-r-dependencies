@@ -89,10 +89,10 @@ runs:
       # ubuntu-release, donttest R-hub checks.
       if [ "${{ runner.os }}" == "Linux" ]; then
         if [ -n "$(cat /etc/*release | grep ID | grep fedora)" ]; then
+          dnf install -y libcurl-devel
+        elif [ -n "$(cat /etc/*release | grep ID | grep ubuntu)" ]; then
           apt-get update
           apt-get install -yq libcurl4-openssl-dev
-        elif [ -n "$(cat /etc/*release | grep ID | grep ubuntu)" ]; then
-          dnf install -y libcurl-devel
         fi
       fi
       R -s -q <<RSCRIPT
