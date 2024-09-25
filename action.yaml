@@ -79,26 +79,20 @@ runs:
       fi
     shell: bash
 
+  - name: Install required packages
+    uses: r-lib/actions/setup-r-dependencies@v2
+    with:
+      packages: ""
+      extra-packages: |
+        any::sessioninfo
+        any::pkgdepends
+        any::cli
+        any::desc
+        any::pkgcache
+      install-pandoc: false
+
   - name: Set repositories
     run: |
-      # Installation of curl required by pkgcache fails because:
-      # Configuration failed because libcurl was not found. Try installing:
-      # * deb: libcurl4-openssl-dev (Debian, Ubuntu, etc)
-      # * rpm: libcurl-devel (Fedora, CentOS, RHEL)
-      # Installation of libcurl is specifically needed for: ubuntu-clang, ubunut-gcc12, ubuntu-next
-      # ubuntu-release, donttest R-hub checks.
-      if [ "${{ runner.os }}" == "Linux" ]; then
-        if [ -n "$(cat /etc/*release | grep ID | grep fedora)" ]; then
-          dnf install -y libcurl-devel
-        elif [ -n "$(cat /etc/*release | grep ID | grep ubuntu)" ]; then
-          apt-get update
-          apt-get install -yq libcurl4-openssl-dev
-        fi
-      fi
-      R -s -q <<RSCRIPT
-      getOption("repos")
-      if (!require("pkgcache")) install.packages("pkgcache", repos='http://cloud.r-project.org')
-      RSCRIPT
       cat > ${HOME}/.Rprofile <<EOF
       repository_list <- unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
@@ -112,17 +106,6 @@ runs:
       echo "Repositories written to ${HOME}/.Rprofile:"
       cat ${HOME}/.Rprofile
     shell: bash
-
-  - name: Install required packages
-    uses: r-lib/actions/setup-r-dependencies@v2
-    with:
-      packages: ""
-      extra-packages: |
-        any::sessioninfo
-        any::pkgdepends
-        any::cli
-        any::desc
-      install-pandoc: false
 
   - name: Prepare utils
     id: utils
@@ -384,6 +367,12 @@ runs:
     id: remove-utils
     shell: bash
     run: rm utils.R
+
+  - name: Debug get repositories
+    run: |
+      cat("Resolved repositories loaded from .Rprofile:\n")
+      getOption("repos")
+    shell: Rscript {0}
 
   - uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
