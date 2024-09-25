@@ -82,6 +82,7 @@ runs:
   - name: Set repositories
     run: |
       R -s -q <<RSCRIPT
+      getOption("repos")
       if (!require("pkgcache")) install.packages("pkgcache")
       RSCRIPT
       cat > ${HOME}/.Rprofile <<EOF
