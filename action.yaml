@@ -99,12 +99,6 @@ runs:
       ))
       options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
       EOF
-      R -s -q <<RSCRIPT
-      cat("Resolved repositories loaded from .Rprofile:\n")
-      getOption("repos")
-      RSCRIPT
-      echo "Repositories written to ${HOME}/.Rprofile:"
-      cat ${HOME}/.Rprofile
     shell: bash
 
   - name: Prepare utils
