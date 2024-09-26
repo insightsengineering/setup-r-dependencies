@@ -81,10 +81,12 @@ runs:
 
   - name: Copy DESCRIPTION
     run: |
+      echo "::group::Copy DESCRIPTION"
       temp_desc=$(mktemp -p .)
       cp ${{ inputs.repository-path }}/DESCRIPTION $temp_desc
       echo "TEMP_DESCRIPTION=$temp_desc" >> $GITHUB_ENV
       sha256sum $temp_desc
+      echo "::endgroup::"
     shell: bash
 
   - name: Install required packages
@@ -383,6 +385,8 @@ runs:
 
   - name: Restore DESCRIPTION
     run: |
+      echo "::group::Restore DESCRIPTION"
       cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
       sha256sum ${{ inputs.repository-path }}/DESCRIPTION
+      echo "::endgroup::"
     shell: bash
