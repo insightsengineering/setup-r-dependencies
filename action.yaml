@@ -85,6 +85,7 @@ runs:
     shell: bash
 
   - name: Copy DESCRIPTION
+    if: ${{ inputs.restore-description == 'true' }}
     run: |
       echo "::group::Copy DESCRIPTION"
       temp_desc=$(mktemp)
