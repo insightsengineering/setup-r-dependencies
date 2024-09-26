@@ -90,7 +90,7 @@ runs:
       temp_desc=$(mktemp)
       cp ${{ inputs.repository-path }}/DESCRIPTION $temp_desc
       echo "TEMP_DESCRIPTION=$temp_desc" >> $GITHUB_ENV
-      sha256sum $temp_desc
+      ls -l $temp_desc
       echo "::endgroup::"
     shell: bash
 
@@ -393,6 +393,6 @@ runs:
     run: |
       echo "::group::Restore DESCRIPTION"
       cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
-      sha256sum ${{ inputs.repository-path }}/DESCRIPTION
+      ls -l ${{ inputs.repository-path }}/DESCRIPTION
       echo "::endgroup::"
     shell: bash
