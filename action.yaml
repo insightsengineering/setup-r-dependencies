@@ -385,3 +385,4 @@ runs:
     run: |
       cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
       sha256sum ${{ inputs.repository-path }}/DESCRIPTION
+    shell: bash
