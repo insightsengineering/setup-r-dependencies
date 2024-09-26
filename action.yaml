@@ -79,6 +79,14 @@ runs:
       fi
     shell: bash
 
+  - name: Copy DESCRIPTION
+    run: |
+      temp_desc=$(mktemp -p .)
+      cp ${{ inputs.repository-path }}/DESCRIPTION $temp_desc
+      echo "TEMP_DESCRIPTION=$temp_desc" >> $GITHUB_ENV
+      sha256sum $temp_desc
+    shell: bash
+
   - name: Install required packages
     uses: r-lib/actions/setup-r-dependencies@v2
     with:
@@ -372,3 +380,8 @@ runs:
         DepsBranch
         DepsDev
       dependencies: ${{ inputs.dependencies }}
+
+  - name: Restore DESCRIPTION
+    run: |
+      cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
+      sha256sum ${{ inputs.repository-path }}/DESCRIPTION
