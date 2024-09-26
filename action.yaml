@@ -54,6 +54,11 @@ inputs:
       Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
     required: false
     default: "PPM@latest"
+  restore-description:
+    description: |
+      Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
+    required: false
+    default: true
 
 branding:
   icon: 'download'
@@ -77,6 +82,17 @@ runs:
         echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}"
         echo "ref-name=${{ steps.branch-names.outputs.current_branch }}" >> $GITHUB_OUTPUT
       fi
+    shell: bash
+
+  - name: Copy DESCRIPTION
+    if: ${{ inputs.restore-description == 'true' }}
+    run: |
+      echo "::group::Copy DESCRIPTION"
+      temp_desc=$(mktemp)
+      cp ${{ inputs.repository-path }}/DESCRIPTION $temp_desc
+      echo "TEMP_DESCRIPTION=$temp_desc" >> $GITHUB_ENV
+      ls -l $temp_desc
+      echo "::endgroup::"
     shell: bash
 
   - name: Install required packages
@@ -372,3 +388,12 @@ runs:
         DepsBranch
         DepsDev
       dependencies: ${{ inputs.dependencies }}
+
+  - name: Restore DESCRIPTION
+    if: ${{ inputs.restore-description == 'true' }}
+    run: |
+      echo "::group::Restore DESCRIPTION"
+      cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
+      ls -l ${{ inputs.repository-path }}/DESCRIPTION
+      echo "::endgroup::"
+    shell: bash
