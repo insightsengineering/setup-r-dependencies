@@ -98,6 +98,7 @@ runs:
   - name: Show repos (beginning)
     run: |
       getOption("repos")
+      pkgcache::repo_resolve("PPM@latest")
     shell: Rscript {0}
 
   - name: Install required packages
@@ -115,6 +116,7 @@ runs:
   - name: Show repos (before setting repos wiyth pkgcache, after r-lib/setup-r-deps)
     run: |
       getOption("repos")
+      pkgcache::repo_resolve("PPM@latest")
     shell: Rscript {0}
 
   - name: Set repositories
@@ -130,6 +132,7 @@ runs:
   - name: Show repos (after setting repos with pkgcache)
     run: |
       getOption("repos")
+      pkgcache::repo_resolve("PPM@latest")
     shell: Rscript {0}
 
   - name: Prepare utils
