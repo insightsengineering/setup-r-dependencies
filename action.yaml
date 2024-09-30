@@ -98,7 +98,6 @@ runs:
   - name: Show repos (beginning)
     run: |
       getOption("repos")
-      pkgcache::repo_resolve("PPM@latest")
     shell: Rscript {0}
 
   - name: Install required packages
