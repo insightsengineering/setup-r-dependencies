@@ -117,6 +117,11 @@ runs:
       EOF
     shell: bash
 
+  - name: Show repos
+    run: |
+      getOption("repos")
+    shell: Rscript {0}
+
   - name: Prepare utils
     id: utils
     shell: Rscript {0}
