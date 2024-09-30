@@ -95,6 +95,11 @@ runs:
       echo "::endgroup::"
     shell: bash
 
+  - name: Show repos (beginning)
+    run: |
+      getOption("repos")
+    shell: Rscript {0}
+
   - name: Install required packages
     uses: r-lib/actions/setup-r-dependencies@v2
     with:
@@ -107,6 +112,11 @@ runs:
         any::pkgcache
       install-pandoc: false
 
+  - name: Show repos (before setting repos wiyth pkgcache, after r-lib/setup-r-deps)
+    run: |
+      getOption("repos")
+    shell: Rscript {0}
+
   - name: Set repositories
     run: |
       cat > ${HOME}/.Rprofile <<EOF
@@ -117,7 +127,7 @@ runs:
       EOF
     shell: bash
 
-  - name: Show repos
+  - name: Show repos (after setting repos with pkgcache)
     run: |
       getOption("repos")
     shell: Rscript {0}
