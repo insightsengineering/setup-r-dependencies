@@ -125,6 +125,7 @@ runs:
         "${{ inputs.repository-list }}", split=","
       ))
       options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
+      cat(unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
       EOF
     shell: bash
 
