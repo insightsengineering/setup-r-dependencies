@@ -116,15 +116,6 @@ runs:
         "${{ inputs.repository-list }}", split=","
       ))
       options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
-      # resolve "@CRAN@"
-      repos <- getOption("repos")
-      if ("@CRAN@" %in% repos) {
-        repos[repos == "@CRAN@"] <- "https://cloud.r-project.org"
-        options(repos = repos)
-      }
-      cat("::group::Repositories\n")
-      print(getOption("repos"))
-      cat("::endgroup::\n")
       EOF
     shell: bash
 
