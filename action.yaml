@@ -111,6 +111,7 @@ runs:
         any::desc
         any::pkgcache
       install-pandoc: false
+      install-quarto: false
 
   - name: Set repositories
     run: |
