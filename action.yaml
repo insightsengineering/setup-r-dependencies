@@ -27,6 +27,10 @@ inputs:
     description: Passed to `r-lib/actions/setup-r-dependencies`.
     required: false
     default: ""
+  install-quarto:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: false
+    default: "auto"
   needs:
     description: |
       Passed to `r-lib/actions/setup-r-dependencies`.
@@ -395,6 +399,7 @@ runs:
         DepsBranch
         DepsDev
       dependencies: ${{ inputs.dependencies }}
+      install-quarto: ${{ inputs.install-quarto }}
 
   - name: Restore DESCRIPTION
     if: ${{ inputs.restore-description == 'true' }}
