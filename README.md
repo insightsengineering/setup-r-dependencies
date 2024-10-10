@@ -58,6 +58,14 @@ Insights Engineering
 
     _Default_: `""`
 
+* `install-quarto`:
+
+    _Description_: Passed to `r-lib/actions/setup-r-dependencies`.
+
+    _Required_: `false`
+
+    _Default_: `auto`
+
 * `needs`:
 
     _Description_: Passed to `r-lib/actions/setup-r-dependencies`. The value will be amended by `DepsBranch` and `DepsDev` values.
