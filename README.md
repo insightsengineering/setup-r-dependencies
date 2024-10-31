@@ -106,6 +106,22 @@ Insights Engineering
 
     _Default_: `10`
 
+* `repository-list`:
+
+    _Description_: Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
+
+    _Required_: `false`
+
+    _Default_: `"PPM@latest"`
+
+* `restore-description`:
+
+    _Description_: Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
+
+    _Required_: `false`
+
+    _Default_: `true`
+
 
 ## Outputs
 
