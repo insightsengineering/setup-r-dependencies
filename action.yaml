@@ -31,6 +31,10 @@ inputs:
     description: Passed to `r-lib/actions/setup-r-dependencies`.
     required: false
     default: "auto"
+  cache-version:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: true
+    default: 1
   needs:
     description: |
       Passed to `r-lib/actions/setup-r-dependencies`.
@@ -401,6 +405,7 @@ runs:
         DepsDev
       dependencies: ${{ inputs.dependencies }}
       install-quarto: ${{ inputs.install-quarto }}
+      cache-version: ${{ inputs.cache-version }}
 
   - name: Restore DESCRIPTION
     if: ${{ inputs.restore-description == 'true' }}
