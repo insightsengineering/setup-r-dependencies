@@ -66,6 +66,14 @@ Insights Engineering
 
     _Default_: `auto`
 
+* `cache-version`:
+
+    _Description_: Passed to `r-lib/actions/setup-r-dependencies`.
+
+    _Required_: `false`
+
+    _Default_: `1`
+
 * `needs`:
 
     _Description_: Passed to `r-lib/actions/setup-r-dependencies`. The value will be amended by `DepsBranch` and `DepsDev` values.

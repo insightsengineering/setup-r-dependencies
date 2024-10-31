@@ -31,6 +31,10 @@ inputs:
     description: Passed to `r-lib/actions/setup-r-dependencies`.
     required: false
     default: "auto"
+  cache-version:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: true
+    default: 1
   needs:
     description: |
       Passed to `r-lib/actions/setup-r-dependencies`.
@@ -117,11 +121,14 @@ runs:
     run: |
       # Set repositories
       cat > ${HOME}/.Rprofile <<EOF
-      repository_list <- unlist(strsplit(
+      repository_list <- trimws(unlist(strsplit(
         "${{ inputs.repository-list }}", split=","
-      ))
+      )))
       options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
       EOF
+      echo "::group::Show .Rprofile"
+      cat ${HOME}/.Rprofile
+      echo "::endgroup::"
     shell: bash
 
   - name: Define utils
@@ -401,6 +408,7 @@ runs:
         DepsDev
       dependencies: ${{ inputs.dependencies }}
       install-quarto: ${{ inputs.install-quarto }}
+      cache-version: ${{ inputs.cache-version }}
 
   - name: Restore DESCRIPTION
     if: ${{ inputs.restore-description == 'true' }}
