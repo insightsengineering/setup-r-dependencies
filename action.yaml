@@ -133,7 +133,7 @@ runs:
         },
         USE.NAMES = FALSE
       )
-      options(repos = unique(c(repos_to_add, getOption("repos"))
+      options(repos = c(repos_to_add, getOption("repos")))
       EOF
       echo "::group::Show R option 'repos'"
       echo $(Rscript -e 'x <- getOption("repos"); for (i in seq_along(x)) { print(sprintf("%s = %s", names(x)[i], x[[i]])) }')
