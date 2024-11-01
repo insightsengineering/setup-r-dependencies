@@ -126,9 +126,9 @@ runs:
         function(x) {
           if (grepl("=", x)) {
             x <- strsplit(x, "=")[[1]]
-            setNames(pkgcache::repo_resolve(x[2]), x[1])
+            stats::setNames(pkgcache::repo_resolve(x[2]), x[1])
           } else {
-            setNames(pkgcache::repo_resolve(x), x)
+            stats::setNames(pkgcache::repo_resolve(x), x)
           }
         },
         USE.NAMES = FALSE
