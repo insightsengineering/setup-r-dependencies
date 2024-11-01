@@ -117,17 +117,26 @@ runs:
       install-pandoc: false
       install-quarto: false
 
-  - name: Set repositories
+  - name: Set R option "repos"
     run: |
-      # Set repositories
       cat > ${HOME}/.Rprofile <<EOF
-      repository_list <- trimws(unlist(strsplit(
-        "${{ inputs.repository-list }}", split=","
-      )))
-      options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
+      input <- "${{ inputs.repository-list }}"
+      repos_to_add <- sapply(
+        trimws(strsplit(input, ",")[[1]]),
+        function(x) {
+          if (grepl("=", x)) {
+            x <- strsplit(x, "=")[[1]]
+            setNames(pkgcache::repo_resolve(x[2]), x[1])
+          } else {
+            setNames(pkgcache::repo_resolve(x), x)
+          }
+        },
+        USE.NAMES = FALSE
+      )
+      options(repos = unique(c(repos_named, getOption("repos"))
       EOF
-      echo "::group::Show .Rprofile"
-      cat ${HOME}/.Rprofile
+      echo "::group::Show R option 'repos'"
+      echo $(Rscript -e 'x <- getOption("repos"); for (i in seq_along(x)) { print(sprintf("%s = %s", names(x)[i], x[[i]])) }')
       echo "::endgroup::"
     shell: bash
 
