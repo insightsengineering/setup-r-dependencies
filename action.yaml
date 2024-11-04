@@ -60,8 +60,9 @@ inputs:
   repository-list:
     description: |
       Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
+      Optionally, list elements can be named in the form of `name=repo_name`.
     required: false
-    default: "PPM@latest"
+    default: "PPM=PPM@latest"
   restore-description:
     description: |
       Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
