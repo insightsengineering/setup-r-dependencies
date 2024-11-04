@@ -116,11 +116,11 @@ Insights Engineering
 
 * `repository-list`:
 
-    _Description_: Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
+    _Description_: Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded. Optionally, list elements can be named in the form of `name=repo_name`.
 
     _Required_: `false`
 
-    _Default_: `"PPM@latest"`
+    _Default_: `"PPM=PPM@latest"`
 
 * `restore-description`:
 

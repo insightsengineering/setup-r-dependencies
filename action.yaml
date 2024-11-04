@@ -60,8 +60,9 @@ inputs:
   repository-list:
     description: |
       Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
+      Optionally, list elements can be named in the form of `name=repo_name`.
     required: false
-    default: "PPM@latest"
+    default: "PPM=PPM@latest"
   restore-description:
     description: |
       Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
@@ -117,17 +118,26 @@ runs:
       install-pandoc: false
       install-quarto: false
 
-  - name: Set repositories
+  - name: Set R option "repos"
     run: |
-      # Set repositories
       cat > ${HOME}/.Rprofile <<EOF
-      repository_list <- trimws(unlist(strsplit(
-        "${{ inputs.repository-list }}", split=","
-      )))
-      options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
+      input <- "${{ inputs.repository-list }}"
+      repos_to_add <- sapply(
+        trimws(strsplit(input, ",")[[1]]),
+        function(x) {
+          if (grepl("=", x)) {
+            x <- strsplit(x, "=")[[1]]
+            stats::setNames(pkgcache::repo_resolve(x[2]), x[1])
+          } else {
+            stats::setNames(pkgcache::repo_resolve(x), x)
+          }
+        },
+        USE.NAMES = FALSE
+      )
+      options(repos = c(repos_to_add, getOption("repos")))
       EOF
-      echo "::group::Show .Rprofile"
-      cat ${HOME}/.Rprofile
+      echo "::group::Show R option 'repos'"
+      echo $(Rscript -e 'x <- getOption("repos"); for (i in seq_along(x)) { print(sprintf("%s = %s", names(x)[i], x[[i]])) }')
       echo "::endgroup::"
     shell: bash
 
