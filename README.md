@@ -11,6 +11,8 @@ This logic requires additional input of package references to check against. Ple
 
 The implementation relies on the `pkgdepends` package and it is temporarily changing the `DESCRIPTION` file by adding new `Config/Needs/` fields. Then `r-lib/actions/setup-r-dependencies` is called with the `needs` parameter.
 
+For private repositories, run the action with `GITHUB_PAT` environment variable set to GitHub token. This is handled by `pak` (via `gitcreds` - see the [documentation](https://gitcreds.r-lib.org/reference/gitcreds_get.html)).
+
 ## Action type
 Composite
 
@@ -18,14 +20,6 @@ Composite
 Insights Engineering
 
 ## Inputs
-* `github-token`:
-
-  _Description_: Token with permissions to clone repositories with dependencies.
-
-  _Required_: `false`
-
-  _Default_: `""`
-
 * `repository-path`:
 
   _Description_: Directory where the R package is located relative to the calling GitHub workflow workspace.
