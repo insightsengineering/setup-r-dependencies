@@ -18,14 +18,6 @@ Composite
 Insights Engineering
 
 ## Inputs
-* `github-token`:
-
-  _Description_: Token with permissions to clone repositories with dependencies.
-
-  _Required_: `false`
-
-  _Default_: `""`
-
 * `repository-path`:
 
   _Description_: Directory where the R package is located relative to the calling GitHub workflow workspace.
