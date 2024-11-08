@@ -11,6 +11,8 @@ This logic requires additional input of package references to check against. Ple
 
 The implementation relies on the `pkgdepends` package and it is temporarily changing the `DESCRIPTION` file by adding new `Config/Needs/` fields. Then `r-lib/actions/setup-r-dependencies` is called with the `needs` parameter.
 
+For private repositories, run the action with `GITHUB_PAT` environment variable set to GitHub token. This is handled by `pak` (via `gitcreds` - see the [documentation](https://gitcreds.r-lib.org/reference/gitcreds_get.html)).
+
 ## Action type
 Composite
 
@@ -18,14 +20,6 @@ Composite
 Insights Engineering
 
 ## Inputs
-* `github-token`:
-
-  _Description_: Token with permissions to clone repositories with dependencies.
-
-  _Required_: `false`
-
-  _Default_: `""`
-
 * `repository-path`:
 
   _Description_: Directory where the R package is located relative to the calling GitHub workflow workspace.
@@ -66,6 +60,14 @@ Insights Engineering
 
     _Default_: `auto`
 
+* `cache-version`:
+
+    _Description_: Passed to `r-lib/actions/setup-r-dependencies`.
+
+    _Required_: `false`
+
+    _Default_: `1`
+
 * `needs`:
 
     _Description_: Passed to `r-lib/actions/setup-r-dependencies`. The value will be amended by `DepsBranch` and `DepsDev` values.
@@ -105,6 +107,22 @@ Insights Engineering
     _Required_: `false`
 
     _Default_: `10`
+
+* `repository-list`:
+
+    _Description_: Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded. Optionally, list elements can be named in the form of `name=repo_name`.
+
+    _Required_: `false`
+
+    _Default_: `"PPM=PPM@latest"`
+
+* `restore-description`:
+
+    _Description_: Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
+
+    _Required_: `false`
+
+    _Default_: `true`
 
 
 ## Outputs

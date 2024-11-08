@@ -4,10 +4,6 @@ author: Insights Engineering
 description: GitHub Action to install R package dependencies
 
 inputs:
-  github-token:
-    description: GitHub token.
-    required: false
-    default: ""
   repository-path:
     description: Directory where the R package is located relative to the calling GitHub workflow workspace.
     required: false
@@ -31,6 +27,10 @@ inputs:
     description: Passed to `r-lib/actions/setup-r-dependencies`.
     required: false
     default: "auto"
+  cache-version:
+    description: Passed to `r-lib/actions/setup-r-dependencies`.
+    required: true
+    default: 1
   needs:
     description: |
       Passed to `r-lib/actions/setup-r-dependencies`.
@@ -56,8 +56,9 @@ inputs:
   repository-list:
     description: |
       Comma-separated list of pkgcache-compatible repository names from which the dependencies will be downloaded.
+      Optionally, list elements can be named in the form of `name=repo_name`.
     required: false
-    default: "PPM@latest"
+    default: "PPM=PPM@latest"
   restore-description:
     description: |
       Whether the DESCRIPTION file (modified by this action) should be restored to its original contents?
@@ -75,6 +76,17 @@ runs:
   - name: Get branch names
     id: branch-names
     uses: tj-actions/branch-names@v8
+
+  - name: Normalize inputs
+    id: normalizer
+    run: |
+      echo "::group::Normalize input variables"
+      # Normalize the repository path
+      repopath="${{ inputs.repository-path }}"
+      repopath=$(echo "${repopath%%/.*}")
+      echo "repository-path=${repopath}" >> $GITHUB_OUTPUT
+      echo "::endgroup::"
+    shell: bash
 
   - name: Get current branch or tag 🏷️
     id: current-branch-or-tag
@@ -94,7 +106,7 @@ runs:
       # Copy DESCRIPTION
       echo "::group::Copy DESCRIPTION"
       temp_desc=$(mktemp)
-      cp ${{ inputs.repository-path }}/DESCRIPTION $temp_desc
+      cp ${{ steps.normalizer.outputs.repository-path }}/DESCRIPTION $temp_desc
       echo "TEMP_DESCRIPTION=$temp_desc" >> $GITHUB_ENV
       ls -l $temp_desc
       echo "::endgroup::"
@@ -113,15 +125,27 @@ runs:
       install-pandoc: false
       install-quarto: false
 
-  - name: Set repositories
+  - name: Set R option "repos"
     run: |
-      # Set repositories
       cat > ${HOME}/.Rprofile <<EOF
-      repository_list <- unlist(strsplit(
-        "${{ inputs.repository-list }}", split=","
-      ))
-      options(repos = unique(c(vapply(repository_list, pkgcache::repo_resolve, character(1)), getOption("repos"))))
+      input <- "${{ inputs.repository-list }}"
+      repos_to_add <- sapply(
+        trimws(strsplit(input, ",")[[1]]),
+        function(x) {
+          if (grepl("=", x)) {
+            x <- strsplit(x, "=")[[1]]
+            stats::setNames(pkgcache::repo_resolve(x[2]), x[1])
+          } else {
+            stats::setNames(pkgcache::repo_resolve(x), x)
+          }
+        },
+        USE.NAMES = FALSE
+      )
+      options(repos = c(repos_to_add, getOption("repos")))
       EOF
+      echo "::group::Show R option 'repos'"
+      echo $(Rscript -e 'x <- getOption("repos"); for (i in seq_along(x)) { print(sprintf("%s = %s", names(x)[i], x[[i]])) }')
+      echo "::endgroup::"
     shell: bash
 
   - name: Define utils
@@ -222,7 +246,7 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Parse inputs\n")
-      path <- parse_input("${{ inputs.repository-path }}")
+      path <- parse_input("${{ steps.normalizer.outputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       current_branch <- parse_input("${{ steps.current-branch-or-tag.outputs.ref-name }}")
       log_vars(path, lookup_refs, current_branch)
@@ -298,7 +322,7 @@ runs:
       cat("::endgroup::\n")
 
       cat("::group::Parse inputs\n")
-      path <- parse_input("${{ inputs.repository-path }}")
+      path <- parse_input("${{ steps.normalizer.outputs.repository-path }}")
       lookup_refs <- parse_input("${{ inputs.lookup-refs }}")
       max_iter <- as.integer("${{ inputs.max-iter }}")
       log_vars(path, lookup_refs, max_iter)
@@ -416,10 +440,11 @@ runs:
       # Remove utils
       rm utils.R
 
-  - uses: r-lib/actions/setup-r-dependencies@v2
+  - name: Install Dependencies
+    uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
     with:
-      working-directory: ${{ inputs.repository-path }}
+      working-directory: ${{ steps.normalizer.outputs.repository-path }}
       extra-packages: ${{ inputs.extra-packages }}
       needs: |
         ${{ inputs.needs }}
@@ -427,13 +452,14 @@ runs:
         DepsDev
       dependencies: ${{ inputs.dependencies }}
       install-quarto: ${{ inputs.install-quarto }}
+      cache-version: ${{ inputs.cache-version }}
 
   - name: Restore DESCRIPTION
     if: ${{ inputs.restore-description == 'true' }}
     run: |
       # Restore DESCRIPTION
       echo "::group::Restore DESCRIPTION"
-      cp ${{ env.TEMP_DESCRIPTION }} ${{ inputs.repository-path }}/DESCRIPTION
-      ls -l ${{ inputs.repository-path }}/DESCRIPTION
+      cp ${{ env.TEMP_DESCRIPTION }} ${{ steps.normalizer.outputs.repository-path }}/DESCRIPTION
+      ls -l ${{ steps.normalizer.outputs.repository-path }}/DESCRIPTION
       echo "::endgroup::"
     shell: bash
