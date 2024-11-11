@@ -414,15 +414,6 @@ runs:
       # Remove utils
       rm utils.R
 
-  - name: Test print repos
-    id: test-print-repos
-    shell: bash
-    run: |
-      # Test print repos
-      echo "::group::Show R option 'repos'"
-      echo $(Rscript -e 'getOption("repos")')
-      echo "::endgroup::"
-
   - name: Install Dependencies
     uses: r-lib/actions/setup-r-dependencies@v2
     if: ${{ inputs.skip-install == 'false' }}
