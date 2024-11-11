@@ -420,6 +420,7 @@ runs:
     with:
       working-directory: ${{ steps.normalizer.outputs.repository-path }}
       extra-packages: ${{ inputs.extra-packages }}
+      upgrade: 'TRUE'
       needs: |
         ${{ inputs.needs }}
         DepsBranch
