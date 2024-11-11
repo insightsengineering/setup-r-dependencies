@@ -352,8 +352,13 @@ runs:
 
       i <- 0L
       failures_message_prev <- NULL
-      while (i <= max_iter) {
+      while (TRUE) {
         i <- i + 1L
+
+        if (i > max_iter) {
+          cli::cli_alert_danger("Maximum number of iterations reached. Exiting.")
+          break()
+        }
 
         x$solve()
 
@@ -364,11 +369,12 @@ runs:
 
         failures <- x$get_solution()$failures
         failed_refs <- unique(unlist(failures[, "failure_down"]))
-        cli::cli_alert_warning("Failed to resolve dependencies. Failed refs: {.pkg {failed_refs}}.")
+        cli::cli_alert_warning("Failed to resolve dependencies.")
         cli::cli_text("Error:")
         cat(format(failures))
         cat("\n")
         cli::cli_text("End of error")
+        cli::cli_text("Failed refs: {.pkg {failed_refs}}.")
 
         failure_message <- failures$failure_message
         if (identical(failure_message, failures_message_prev)) {
@@ -380,12 +386,32 @@ runs:
         for (failed_ref in failed_refs) {
           pkg <- pkgdepends::parse_pkg_ref(failed_ref)$package
           pkg_ref <- find_ref(pkg, lookup_refs)
+
+          # skip if not found
           if (length(pkg_ref) == 0) {
-            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code lookup_refs} list: {.val {lookup_refs}}. Exiting.")
-            break()
+            cli::cli_alert_danger("Package {.pkg {pkg}} not found in the {.code lookup_refs} list: {.val {lookup_refs}}. Skipping.")
+            next()
           }
+
+          # skip if already there
+          if (pkg_ref$ref %in% d$get_field("Config/Needs/DepsDev")) {
+            cli::cli_alert_info("Reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsDev} field. Skipping.")
+            next()
+          }
+
+          # skip if already in `DepsBranch`
+          # this is to avoid duplicates - `Deps Branch` takes precedence over `DepsDev`
+          if (
+            (!identical(d$get_field("Config/Needs/DepsBranch"), "")) &&
+            (pkg %in% vapply(d$get_field("Config/Needs/DepsBranch"), function(x) pkgdepends::parse_pkg_ref(x)$package, character(1)))
+          ) {
+            cli::cli_alert_info("A reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsBranch} field. Skipping.")
+            next()
+          }
+
           cli::cli_alert_info("Adding package {.pkg {pkg}} (ref: {.val {pkg_ref$ref}}) to the {.field Config/Needs/DepsDev} field.")
           desc_field_append(d, "Config/Needs/DepsDev", pkg_ref$ref)
+
           d$write(path)
         }
 
