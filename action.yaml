@@ -162,7 +162,7 @@ runs:
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
-        if (d$has_fields(key) && d$get_field(key, "") == "") {
+        if (d$has_fields(key) && d$get_field(key) == "") {
           d$del(key)
         }
       }
