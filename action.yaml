@@ -162,7 +162,7 @@ runs:
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
-        if (empty_field(d, key)) {
+        if (desc_empty_field(d, key)) {
           d$del(key)
         }
       }
@@ -221,7 +221,7 @@ runs:
         trimws(strsplit(x = gsub("\n", ",", input), split = ",")[[1]])
       }
       
-      empty_field <- function(d, field) {
+      desc_empty_field <- function(d, field) {
         d$has_fields(field) && !nzchar(d$get_field(field, ""))
       }
       
