@@ -162,7 +162,7 @@ runs:
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
-        if (d$has_fields(key) && d$get_field(key) == "") {
+        if (d$has_fields(key) && d$get_field(key, "") == "") {
           d$del(key)
         }
       }
@@ -394,7 +394,7 @@ runs:
           }
 
           # skip if already there
-          if (pkg_ref$ref %in% d$get_field("Config/Needs/DepsDev")) {
+          if (pkg_ref$ref %in% d$get_field("Config/Needs/DepsDev", ""))) {
             cli::cli_alert_info("Reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsDev} field. Skipping.")
             next()
           }
@@ -402,8 +402,8 @@ runs:
           # skip if already in `DepsBranch`
           # this is to avoid duplicates - `Deps Branch` takes precedence over `DepsDev`
           if (
-            (!identical(d$get_field("Config/Needs/DepsBranch"), "")) &&
-            (pkg %in% vapply(d$get_field("Config/Needs/DepsBranch"), function(x) pkgdepends::parse_pkg_ref(x)$package, character(1)))
+            (!identical(d$get_field("Config/Needs/DepsBranch", ""), "")) &&
+            (pkg %in% vapply(d$get_field("Config/Needs/DepsBranch", ""), function(x) pkgdepends::parse_pkg_ref(x)$package, character(1)))
           ) {
             cli::cli_alert_info("A reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsBranch} field. Skipping.")
             next()
