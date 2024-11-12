@@ -225,7 +225,7 @@ runs:
         d$has_fields(field) && !nzchar(d$get_field(field, ""))
       }
       
-      get_parsed_input <- function(d, field) {
+      desc_get_field_vec <- function(d, field) {
          parse_input(d$get_field(field, ""))
       }
       
@@ -403,7 +403,7 @@ runs:
           }
 
           # skip if already there
-          if (pkg_ref$ref %in% get_parsed_input(d, "Config/Needs/DepsDev")) {
+          if (pkg_ref$ref %in% desc_get_field_vec(d, "Config/Needs/DepsDev")) {
             cli::cli_alert_info("Reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsDev} field. Skipping.")
             next()
           }
@@ -411,8 +411,8 @@ runs:
           # skip if already in `DepsBranch`
           # this is to avoid duplicates - `Deps Branch` takes precedence over `DepsDev`
           if (
-            (!identical(get_parsed_input(d, "Config/Needs/DepsBranch"), "")) &&
-            (pkg %in% vapply(get_parsed_input(d, "Config/Needs/DepsBranch"), function(x) {if (x == "") { character(1L)} else {pkgdepends::parse_pkg_ref(x)$package}}, character(1)))
+            (!identical(desc_get_field_vec(d, "Config/Needs/DepsBranch"), "")) &&
+            (pkg %in% vapply(desc_get_field_vec(d, "Config/Needs/DepsBranch"), function(x) {if (x == "") { character(1L)} else {pkgdepends::parse_pkg_ref(x)$package}}, character(1)))
           ) {
             cli::cli_alert_info("A reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsBranch} field. Skipping.")
             next()
