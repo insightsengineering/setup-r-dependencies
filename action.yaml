@@ -156,13 +156,13 @@ runs:
       cat("::group::Define utils\n")
       desc_field_append <- function(d, key, value) {
         old_values <- d$get_field(key)
-        old_values_v <- trimws(strsplit(x = old_values, split = ",")[[1]])
+        old_values_v <- parse_input(old_values)
         new_values_v <- unique(c(old_values_v, value))
         new_values <- paste(new_values_v, collapse = ", ")
         d$set_list(key, new_values)
       }
       desc_field_clear_if_empty <- function(d, key) {
-        if (d$has_fields(key) && d$get_field(key) == "") {
+        if (desc_empty_field(d, key)) {
           d$del(key)
         }
       }
@@ -220,6 +220,15 @@ runs:
       parse_input <- function(input) {
         trimws(strsplit(x = gsub("\n", ",", input), split = ",")[[1]])
       }
+      
+      desc_empty_field <- function(d, field) {
+        d$has_fields(field) && !nzchar(d$get_field(field, ""))
+      }
+      
+      desc_get_field_vec <- function(d, field) {
+         parse_input(d$get_field(field, ""))
+      }
+      
       log_vars <- function(...) {
         args <- list(...)
         arg_names <- substitute(...())
@@ -394,7 +403,7 @@ runs:
           }
 
           # skip if already there
-          if (pkg_ref$ref %in% d$get_field("Config/Needs/DepsDev")) {
+          if (pkg_ref$ref %in% desc_get_field_vec(d, "Config/Needs/DepsDev")) {
             cli::cli_alert_info("Reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsDev} field. Skipping.")
             next()
           }
@@ -402,8 +411,8 @@ runs:
           # skip if already in `DepsBranch`
           # this is to avoid duplicates - `Deps Branch` takes precedence over `DepsDev`
           if (
-            (!identical(d$get_field("Config/Needs/DepsBranch"), "")) &&
-            (pkg %in% vapply(d$get_field("Config/Needs/DepsBranch"), function(x) pkgdepends::parse_pkg_ref(x)$package, character(1)))
+            (!identical(desc_get_field_vec(d, "Config/Needs/DepsBranch"), "")) &&
+            (pkg %in% vapply(desc_get_field_vec(d, "Config/Needs/DepsBranch"), function(x) {if (x == "") { character(1L)} else {pkgdepends::parse_pkg_ref(x)$package}}, character(1)))
           ) {
             cli::cli_alert_info("A reference for package {.pkg {pkg}} already exists in the {.field Config/Needs/DepsBranch} field. Skipping.")
             next()
