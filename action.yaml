@@ -75,7 +75,7 @@ runs:
 
   - name: Get branch names
     id: branch-names
-    uses: tj-actions/branch-names@v8
+    uses: tj-actions/branch-names@dde14ac574a8b9b1cedc59a1cf312788af43d8d8 # v8
 
   - name: Normalize inputs
     id: normalizer
@@ -113,7 +113,7 @@ runs:
     shell: bash
 
   - name: Install required packages
-    uses: r-lib/actions/setup-r-dependencies@v2
+    uses: r-lib/actions/setup-r-dependencies@6f6e5bc62fba3a704f74e7ad7ef7676c5c6a2590 # v2
     with:
       packages: ""
       extra-packages: |
@@ -450,7 +450,7 @@ runs:
       rm utils.R
 
   - name: Install Dependencies
-    uses: r-lib/actions/setup-r-dependencies@v2
+    uses: r-lib/actions/setup-r-dependencies@6f6e5bc62fba3a704f74e7ad7ef7676c5c6a2590 # v2
     if: ${{ inputs.skip-install == 'false' }}
     with:
       working-directory: ${{ steps.normalizer.outputs.repository-path }}
